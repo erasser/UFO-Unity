@@ -1,0 +1,3 @@
+﻿objects visibility?
+how to access object geometry, i.e. vertices data?              <MeshFilter> component!
+swapped y and z on UFO model :'(
