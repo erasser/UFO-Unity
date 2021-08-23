@@ -16,6 +16,7 @@ public class UfoController : MonoBehaviour
     private static Vector3 _ufoVelocityChange;  // Add an instant velocity change to the rigidbody (ignoring its mass)
     private static Vector3 _ufoNewVelocity;  // Add an instant velocity change to the rigidbody (ignoring its mass)
     private static Text _infoText;  // UI element
+    // private bool _applyVerticalForce;
     
     void Start()
     {
@@ -58,18 +59,22 @@ public class UfoController : MonoBehaviour
         }
         else  // No key pressed, slow down
         {
-            
+            print("velocity = " + _ufoRigidBody.velocity.y);
             if (_ufoRigidBody.velocity.y > 0)
             {
                 _ufoVelocityChange.y = -8f * Time.fixedDeltaTime;
             }
             else if (_ufoRigidBody.velocity.y < 0)
             {
+                _ufoVelocityChange.y = 8f * Time.fixedDeltaTime;
+            }
+
+            // Compute average Δ-time to find optimal value?
+            if (Mathf.Abs(_ufoRigidBody.velocity.y) > 0 && _ufoRigidBody.velocity.y < .0001)
+            {
                 _ufoVelocityChange.y = 0;
                 _ufoRigidBody.velocity = new Vector3(0, 0, 0);
             }
-            
-
         }
 
         _infoText.text = _ufoRigidBody.velocity.y.ToString();            
