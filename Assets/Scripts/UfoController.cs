@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-// TODO:  Z is up axis
+// TODO:  Limit speed by applying magnitude of velocity vector, so speed of particular axes are not independent and so UFO has its 'total' max speed limit
 
 public class UfoController : MonoBehaviour
 {
@@ -16,7 +16,7 @@ public class UfoController : MonoBehaviour
     private static Vector3 _ufoVelocityChange;  // Add an instant velocity change to the rigidbody (ignoring its mass)
     private static Vector3 _ufoNewVelocity;  // Add an instant velocity change to the rigidbody (ignoring its mass)
     private static Text _infoText;  // UI element
-    // private bool _applyVerticalForce;
+    private const int MAXSpeed = 5;
     
     void Start()
     {
@@ -24,6 +24,8 @@ public class UfoController : MonoBehaviour
         _ufoRigidBody = _ufo.GetComponent<Rigidbody>();
         _ufoLights = GameObject.Find("UfoLights");
         _infoText = GameObject.Find("InfoText").GetComponent<Text>();
+        
+        var tmp = new Vector3(0,3,4);
     }
 
     void FixedUpdate()
@@ -45,42 +47,71 @@ public class UfoController : MonoBehaviour
 
         if (Input.GetKey(KeyCode.Space))  // Accelerate depending of key pressed
         {
-            if (_ufoRigidBody.velocity.y < 5)  // max speed limit not reached yet
-                _ufoVelocityChange.y = 4f * Time.fixedDeltaTime;
-            else
-                _ufoVelocityChange.y = 0;      // max speed limit reached, don't accelerate
+            // if (_ufoRigidBody.velocity.y < 5)  // max speed limit not reached yet
+            _ufoVelocityChange.y = 4 * Time.fixedDeltaTime;
+            // else
+            //     _ufoVelocityChange.y = 0;      // max speed limit reached, don't accelerate
         }
         else if (Input.GetKey(KeyCode.LeftControl))
         {
-            if (_ufoRigidBody.velocity.y > -5)
-                _ufoVelocityChange.y = -4f * Time.fixedDeltaTime;
-            else
-                _ufoVelocityChange.y = 0;
+            // if (_ufoRigidBody.velocity.y > -5)
+            //     _ufoVelocityChange.y = -4 * Time.fixedDeltaTime;
+            // else
+            //     _ufoVelocityChange.y = 0;
         }
-        else  // No key pressed, slow down
+        else  // No up/down key pressed, slow down
         {
-            print("velocity = " + _ufoRigidBody.velocity.y);
-            if (_ufoRigidBody.velocity.y > 0)
+/*            if (_ufoRigidBody.velocity.y > 0)
             {
-                _ufoVelocityChange.y = -8f * Time.fixedDeltaTime;
+                _ufoVelocityChange.y = -5 * Time.fixedDeltaTime;
             }
             else if (_ufoRigidBody.velocity.y < 0)
             {
-                _ufoVelocityChange.y = 8f * Time.fixedDeltaTime;
+                _ufoVelocityChange.y = 5 * Time.fixedDeltaTime;
             }
 
             // Compute average Δ-time to find optimal value?
-            if (Mathf.Abs(_ufoRigidBody.velocity.y) > 0 && _ufoRigidBody.velocity.y < .0001)
+            // if (Mathf.Abs(_ufoRigidBody.velocity.y) > 0 && _ufoRigidBody.velocity.y < .0001)  // this value is present elsewhere too
+            if (Mathf.Abs(_ufoRigidBody.velocity.magnitude) > 0 && _ufoRigidBody.velocity.magnitude < .0001)  // this value is present elsewhere too
             {
                 _ufoVelocityChange.y = 0;
                 _ufoRigidBody.velocity = new Vector3(0, 0, 0);
             }
+*/
         }
+        
+        if (_ufoRigidBody.velocity.magnitude > MAXSpeed)
+            _ufoRigidBody.velocity = _ufoRigidBody.velocity.normalized * MAXSpeed;  // i.e. set length
+        
+/*
+        if (Input.GetKey(KeyCode.W))
+        {
+            _ufoVelocityChange.z = 6 * Time.fixedDeltaTime;
+        }
+        else if (Input.GetKey(KeyCode.S))
+        {
+            _ufoVelocityChange.z = -6 * Time.fixedDeltaTime;
+        }
+        else  // No forward/backward key pressed, slow down
+        {
+            if (_ufoRigidBody.velocity.z > 0)
+            {
+                _ufoVelocityChange.z = -8 * Time.fixedDeltaTime;
+            }
+            else if (_ufoRigidBody.velocity.z < 0)
+            {
+                _ufoVelocityChange.z = 8 * Time.fixedDeltaTime;
+            }
 
-        _infoText.text = _ufoRigidBody.velocity.y.ToString();            
-            
+            if (Mathf.Abs(_ufoRigidBody.velocity.z) > 0 && _ufoRigidBody.velocity.y < .0001)
+            {
+                _ufoVelocityChange.z = 0;
+                _ufoRigidBody.velocity = new Vector3(0, 0, 0);
+            }
+        }
+*/
         _ufoRigidBody.AddForce(_ufoVelocityChange, ForceMode.VelocityChange);  // AddLocalForce has swapped y and z
-
+        _infoText.text = "velocity = " + _ufoRigidBody.velocity.magnitude.ToString();
         
         // Force	        Add a continuous force to the rigidbody, using its mass.
         // Acceleration	    Add a continuous acceleration to the rigidbody, ignoring its mass.
@@ -88,5 +119,4 @@ public class UfoController : MonoBehaviour
         // VelocityChange	Add an instant velocity change to the rigidbody, ignoring its mass.
         
     }
-
 }
