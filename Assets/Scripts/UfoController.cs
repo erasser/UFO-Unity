@@ -12,9 +12,8 @@ public class UfoController : MonoBehaviour
     private static GameObject _ufoLights;
     private static GameObject _ufo;
     private static Rigidbody _ufoRigidBody;
-    // private static Vector3 _ufoPhysicalForce;
     private static Vector3 _ufoVelocityChange;  // Add an instant velocity change to the rigidbody (ignoring its mass)
-    private static Vector3 _ufoNewVelocity;  // Add an instant velocity change to the rigidbody (ignoring its mass)
+    private static Vector3 _ufoRotationChange;
     private static Text _infoText;  // UI element
     private const int MAXSpeed = 5;
     
@@ -39,9 +38,10 @@ public class UfoController : MonoBehaviour
             _ufoRigidBody.useGravity = !_ufoRigidBody.useGravity;
         }
     }
-    
-    void MoveUfo()  // Classic movement model.
+
+    private static void MoveUfo()  // Classic movement model.
     {
+        /******* MOVEMENT *******/
         // TODO: Either one of these should be valid. If both are pressed, behave as none of them is pressed.
         if (Input.GetKey(KeyCode.Space))  // Accelerate depending of key pressed
             _ufoVelocityChange.y = 4 * Time.fixedDeltaTime;
@@ -90,5 +90,19 @@ public class UfoController : MonoBehaviour
         // Impulse	        Add an instant force impulse to the rigidbody, using its mass.
         // VelocityChange	Add an instant velocity change to the rigidbody, ignoring its mass.
         
+        /******* ROTATION *******/
+        // TODO: Either one of these should be valid. If both are pressed, behave as none of them is pressed.
+        if (Input.GetKey(KeyCode.A))
+        {
+            _ufoRotationChange.y = -2 * Time.fixedDeltaTime;
+        }
+        else if (Input.GetKey(KeyCode.D))
+        {
+            _ufoRotationChange.y = 2 * Time.fixedDeltaTime;
+        }
+        else
+            _ufoRotationChange.y = 0;
+        
+        _ufoRigidBody.AddTorque(_ufoRotationChange, ForceMode.VelocityChange);
     }
 }
