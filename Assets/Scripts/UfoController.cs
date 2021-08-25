@@ -15,6 +15,7 @@ public class UfoController : MonoBehaviour
     private static Vector3 _ufoVelocityChange;  // Add an instant velocity change to the rigidbody (ignoring its mass)
     private static Vector3 _ufoRotationChange;
     private static Text _infoText;  // UI element
+    private static GameObject _arrowHelper;
     private const int MAXSpeed = 5;
     
     void Start()
@@ -23,8 +24,7 @@ public class UfoController : MonoBehaviour
         _ufoRigidBody = _ufo.GetComponent<Rigidbody>();
         _ufoLights = GameObject.Find("UfoLights");
         _infoText = GameObject.Find("InfoText").GetComponent<Text>();
-        
-        var tmp = new Vector3(0,3,4);
+        _arrowHelper = GameObject.Find("arrow");
     }
 
     void FixedUpdate()
@@ -82,8 +82,13 @@ public class UfoController : MonoBehaviour
             _ufoRigidBody.velocity = _ufoRigidBody.velocity.normalized * MAXSpeed;
         }
 
-        _infoText.text = "velocity = " + _ufoRigidBody.velocity.magnitude.ToString();
-        _ufoRigidBody.AddForce(_ufoVelocityChange, ForceMode.VelocityChange);  // AddLocalForce has swapped y and z
+        _infoText.text = _ufoRigidBody.velocity.magnitude.ToString();
+        _ufoRigidBody.AddRelativeForce(_ufoVelocityChange, ForceMode.VelocityChange);
+
+        // _ufoVelocityChangeSwappedXY.x = _ufoVelocityChange.x;
+        // _ufoVelocityChangeSwappedXY.y = _ufoVelocityChange.z;
+        // _ufoVelocityChangeSwappedXY.z = _ufoVelocityChange.y;
+        // _ufoRigidBody.AddRelativeForce(_ufoVelocityChangeSwappedXY, ForceMode.VelocityChange);  // AddLocalForce has swapped y and z
         
         // Force	        Add a continuous force to the rigidbody, using its mass.
         // Acceleration	    Add a continuous acceleration to the rigidbody, ignoring its mass.
@@ -101,8 +106,15 @@ public class UfoController : MonoBehaviour
             _ufoRotationChange.y = 2 * Time.fixedDeltaTime;
         }
         else
+        {
             _ufoRotationChange.y = 0;
-        
-        _ufoRigidBody.AddTorque(_ufoRotationChange, ForceMode.VelocityChange);
+            _ufoRigidBody.angularVelocity = Vector3.zero;
+        }
+
+        _ufoRigidBody.AddRelativeTorque(_ufoRotationChange, ForceMode.VelocityChange);
+
+        // _arrowHelper.GetComponent<MeshRenderer>().enabled = _ufoRigidBody.velocity.magnitude != 0;
+        _arrowHelper.transform.rotation = Quaternion.LookRotation(_ufoRigidBody.velocity.normalized);
+        // _arrowHelper.transform.rotation = Quaternion.LookRotation(_ufoVelocityChange.normalized);
     }
 }
