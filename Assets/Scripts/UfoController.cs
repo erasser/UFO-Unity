@@ -29,7 +29,7 @@ public class UfoController : MonoBehaviour
         _arrowHelper = GameObject.Find("arrow");
         _cubeHelper = GameObject.Find("CubeHelper");
 
-        _arrowHelper.GetComponent<MeshRenderer>().enabled = false;
+        // _arrowHelper.GetComponent<MeshRenderer>().enabled = false;
     }
 
     void FixedUpdate()
@@ -38,15 +38,21 @@ public class UfoController : MonoBehaviour
 
         MoveUfo();
         
-        if (Input.GetKey(KeyCode.F))  // switch gravity
+        if (Input.GetKeyDown(KeyCode.F))  // switch gravity
         {
-            // var drag = _ufoRigidBody.drag;
+            var drag = _ufoRigidBody.drag;
             _ufoRigidBody.useGravity = !_ufoRigidBody.useGravity;
 
-            // if (_ufoRigidBody.useGravity)
-            //     _ufoRigidBody.drag = 0;
-            // else
-            //     _ufoRigidBody.drag = drag;
+            if (_ufoRigidBody.useGravity)
+                _ufoRigidBody.drag = .5f;
+            else
+                _ufoRigidBody.drag = drag;
+        }
+
+        if (Input.GetKey(KeyCode.R))  // auto level
+        {
+            // _ufoRigidBody.transform.rotation = Quaternion.Euler(0, _ufoRigidBody.transform.rotation.y, 0);
+            // TODO: Do auto leveling by adding torque
         }
     }
 
@@ -86,7 +92,14 @@ public class UfoController : MonoBehaviour
             // _ufoRigidBody.drag = 8;
         }
 
-        
+        if (Input.GetKey(KeyCode.Q))
+            _ufoVelocityChange.x = 20 * Time.fixedDeltaTime;
+        else if (Input.GetKey(KeyCode.E))
+            _ufoVelocityChange.x = -20 * Time.fixedDeltaTime;
+        else
+            _ufoVelocityChange.x = 0;
+
+
         // Compute average Δ-time to find optimal value?
         // if (_ufoRigidBody.velocity.magnitude > 0 && _ufoRigidBody.velocity.magnitude < .0001)
         // {
@@ -117,32 +130,33 @@ public class UfoController : MonoBehaviour
         // TODO: Either one of these should be valid. If both are pressed, behave as none of them is pressed.
         if (Input.GetKey(KeyCode.A))
         {
-            _ufoRotationChange.y = -80 * Time.fixedDeltaTime;
+            _ufoRotationChange.y = -8 * Time.fixedDeltaTime;
+            // _ufoRotationChange.y = -80 / (10f + _ufoRigidBody.velocity.magnitude * 3);  // there is also sqrMagnitude
         }
         else if (Input.GetKey(KeyCode.D))
         {
-            _ufoRotationChange.y = 80 * Time.fixedDeltaTime;
+            _ufoRotationChange.y = 8 * Time.fixedDeltaTime;
         }
         else
         {
             _ufoRotationChange.y = 0;
-            _ufoRigidBody.angularVelocity = Vector3.zero;
+            // _ufoRigidBody.angularVelocity = Vector3.zero;
         }
 
-        // _ufoRigidBody.AddRelativeTorque(_ufoRotationChange, ForceMode.VelocityChange);
-        _ufoRigidBody.transform.Rotate(_ufoRotationChange);
+        _ufoRigidBody.AddRelativeTorque(_ufoRotationChange, ForceMode.VelocityChange);
+        // _ufoRigidBody.transform.Rotate(_ufoRotationChange);  // with _ufoRotationChange.y = 80 * Time.fixedDeltaTime;
 
         // _arrowHelper.GetComponent<MeshRenderer>().enabled = _ufoRigidBody.velocity.magnitude != 0;
         // _arrowHelper.transform.rotation = Quaternion.LookRotation(_ufoRigidBody.velocity.normalized);
         // _arrowHelper.transform.rotation = Quaternion.LookRotation(_ufoVelocityChange.normalized);
 
 
-        _timeInterval += Time.fixedDeltaTime;
-        if (_timeInterval > .04f)
-        {
-            _timeInterval = 0;
-            var cubeHelper = Instantiate(_cubeHelper);
-            cubeHelper.transform.position = _ufoRigidBody.transform.position;  // Its not a reference, because its a struct?
-        }
+        // _timeInterval += Time.fixedDeltaTime;
+        // if (_timeInterval > .04f)
+        // {
+        //     _timeInterval = 0;
+        //     var cubeHelper = Instantiate(_cubeHelper);
+        //     cubeHelper.transform.position = _ufoRigidBody.transform.position;  // Its not a reference, because its a struct?
+        // }
     }
 }
