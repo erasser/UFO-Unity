@@ -3,3 +3,4 @@
 objects visibility?                                             Disable Mesh renderer
 how to access object geometry, i.e. vertices data?              <MeshFilter> component!
 swapped y and z on UFO model (-90° x rotation)                  Solved by rotating pivot in 3ds Max
+Android build >:-(                                              https://forum.unity.com/threads/android-ndk-not-found.1111555/

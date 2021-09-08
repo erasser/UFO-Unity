@@ -21,6 +21,7 @@ public class UfoController : MonoBehaviour
     private static GameObject _arrowHelper;
     private static GameObject _cubeHelper;
     private GameObject _ufoCamera;
+    private float _initialCameraUfoDistance;
     private GameObject _topCamera;
     private const int MAXSpeed = 5;     // Now the drag property takes care of this
     private float _timeInterval;
@@ -37,6 +38,8 @@ public class UfoController : MonoBehaviour
         _cubeHelper = GameObject.Find("CubeHelper");
         _ufoCamera = GameObject.Find("CameraUfo");
         _topCamera = GameObject.Find("CameraTop");
+
+        _initialCameraUfoDistance = _ufoCamera.transform.localPosition.z;  // It's set in editor and it's the minimum distance
 
         // _ufoForceBeam.GetComponent<CapsuleCollider>().enabled = false;
         _ufoForceBeam.SetActive(false);
@@ -89,34 +92,23 @@ public class UfoController : MonoBehaviour
     private void MoveUfo()
     {
         /******* MOVEMENT *******/
+        var velocityCoefficient = Input.GetKey(KeyCode.LeftShift) ? 10 : 1;
+
         // TODO: Either one of these should be valid. If both are pressed, behave as none of them is pressed.
         if (Input.GetKey(KeyCode.Space))  // Accelerate depending of key pressed
             _ufoVelocityChange.y = 20 * Time.fixedDeltaTime;
         else if (Input.GetKey(KeyCode.LeftControl))
             _ufoVelocityChange.y = -20 * Time.fixedDeltaTime;
-        else                              // No up/down key pressed, slow down vertically
-        // {
-        //     if (_ufoRigidBody.velocity.y > 0)
-        //         _ufoVelocityChange.y = -3 * Time.fixedDeltaTime;  // TODO: When making these constants, this value should be lower than those in the upper block
-        //     else if (_ufoRigidBody.velocity.y < 0)
-        //         _ufoVelocityChange.y = 3 * Time.fixedDeltaTime;
-        
+        else                              // No up/down key pressed, apply no force
             _ufoVelocityChange.y = 0;
-        // }
 
-        // _ufoRigidBody.drag = 4;
         // TODO: Either one of these should be valid. If both are pressed, behave as none of them is pressed.
         if (Input.GetKey(KeyCode.W))      // Accelerate depending of key pressed
-            _ufoVelocityChange.z = 30 * Time.fixedDeltaTime;
+            _ufoVelocityChange.z = 30 * Time.fixedDeltaTime * velocityCoefficient;
         else if (Input.GetKey(KeyCode.S))
-            _ufoVelocityChange.z = -30 * Time.fixedDeltaTime;
-        else                              // No forward/backward key pressed, slow down horizontally z
+            _ufoVelocityChange.z = -30 * Time.fixedDeltaTime * velocityCoefficient;
+        else                              // No forward/backward key pressed, apply no force to horizontal z
         {
-            // if (_ufoRigidBody.velocity.z > 0)
-            //     ufoVelocityChange.z = -5 * Time.fixedDeltaTime;
-            // else if (_ufoRigidBody.velocity.z < 0)
-            //     ufoVelocityChange.z = 5 * Time.fixedDeltaTime;
-
             _ufoVelocityChange.z = 0;
             // _ufoRigidBody.velocity = Vector3.zero;
             // _ufoRigidBody.drag = 8;
@@ -128,7 +120,6 @@ public class UfoController : MonoBehaviour
             _ufoVelocityChange.x = 20 * Time.fixedDeltaTime;
         else
             _ufoVelocityChange.x = 0;
-
 
         // Compute average Δ-time to find optimal value?
         // if (_ufoRigidBody.velocity.magnitude > 0 && _ufoRigidBody.velocity.magnitude < .0001)
@@ -146,11 +137,6 @@ public class UfoController : MonoBehaviour
         _infoText.text = _ufoRigidBody.velocity.magnitude.ToString();
         _ufoRigidBody.AddRelativeForce(_ufoVelocityChange, ForceMode.VelocityChange);
 
-        // _ufoVelocityChangeSwappedXY.x = _ufoVelocityChange.x;
-        // _ufoVelocityChangeSwappedXY.y = _ufoVelocityChange.z;
-        // _ufoVelocityChangeSwappedXY.z = _ufoVelocityChange.y;
-        // _ufoRigidBody.AddRelativeForce(_ufoVelocityChangeSwappedXY, ForceMode.VelocityChange);  // AddLocalForce has swapped y and z
-        
         // Force	        Add a continuous force to the rigidbody, using its mass.
         // Acceleration	    Add a continuous acceleration to the rigidbody, ignoring its mass.
         // Impulse	        Add an instant force impulse to the rigidbody, using its mass.
@@ -180,7 +166,6 @@ public class UfoController : MonoBehaviour
         // _arrowHelper.transform.rotation = Quaternion.LookRotation(_ufoRigidBody.velocity.normalized);
         // _arrowHelper.transform.rotation = Quaternion.LookRotation(_ufoVelocityChange.normalized);
 
-
         // _timeInterval += Time.fixedDeltaTime;
         // if (_timeInterval > .04f)
         // {
@@ -190,12 +175,27 @@ public class UfoController : MonoBehaviour
         // }
 
         // AlignUfoCamera();
+
+        SetCameraUfoDistance();
         
         AlignTopCamera();
 
         ApplyForceBeam();
     }
 
+    private void SetCameraUfoDistance()
+    {
+        var localPosition = _ufoCamera.transform.localPosition;
+        localPosition = new Vector3(
+            localPosition.x,
+            localPosition.y,
+            // _initialCameraUfoDistance - _ufoRigidBody.velocity.z / 4
+            _initialCameraUfoDistance - _ufoRigidBody.velocity.magnitude / 4
+            // _initialCameraUfoDistance
+        );
+        _ufoCamera.transform.localPosition = localPosition;
+    }
+    
     private void AlignUfoCamera()
     {
         if (!_ufoCamera) return;
