@@ -17,15 +17,15 @@ public class UfoController : MonoBehaviour
     private static Rigidbody _ufoRigidBody;
     private Vector3 _ufoVelocityChange;  // Add an instant velocity change to the rigidbody (ignoring its mass)
     private static Vector3 _ufoRotationChange;
-    private static Text _infoText;  // UI element
     private static GameObject _arrowHelper;
     private static GameObject _cubeHelper;
     private GameObject _ufoCamera;
     private float _initialCameraUfoDistance;
     private GameObject _topCamera;
-    private const int MAXSpeed = 5;     // Now the drag property takes care of this
     private float _timeInterval;
     private static bool _forceBeamEnabled;
+    private static Text _infoText;         // UI element
+    private const int MAXSpeed = 5;     // Now the drag property takes care of this
     
     void Start()
     {
@@ -60,13 +60,15 @@ public class UfoController : MonoBehaviour
                 _ufoRigidBody.drag = drag;
         }
 
-        if (Input.GetKeyDown(KeyCode.F)) // switch force field
+        if (Input.GetKeyDown(KeyCode.F))  // switch force field
         {
             _forceBeamEnabled = !_forceBeamEnabled;
             _ufoForceBeam.SetActive(_forceBeamEnabled);
         
             _ufoCamera.transform.Rotate(_forceBeamEnabled ? new Vector3(10, 0, 0) : new Vector3(-10, 0, 0));
         }
+
+        Performance.ShowFPS();
     }
     
     void FixedUpdate()
@@ -251,7 +253,7 @@ public class UfoController : MonoBehaviour
         
         // Physics
     }
-    
+
     // TODO: Co zneužít přetěžování operátorů + extendnout třídu Vector3?
     // This is because they won't allow me to change individual Vector component
     private static void UpdateVectorComponent(ref Vector3 vectorToUpdate, string component, float value)

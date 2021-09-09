@@ -17,7 +17,7 @@ public class SaturnController : MonoBehaviour
         _asteroidsParent = GameObject.Find("AsteroidsParent");
         // _saturnRing = GameObject.Find("SaturnRing");
 
-        for (var i = 0; i < 666; i++)
+        for (var i = 0; i < 1000; i++)
         {
             var innerRadius = 2000;
             var outerRadius = 4000;
@@ -33,16 +33,16 @@ public class SaturnController : MonoBehaviour
 
             //           max  * /                   range <0;1>                      \  min size
             // var scale = 2 * (outerRadius - innerRadius) / (distance - innerRadius) + .1f;  // more distant => bigger asteroid
-            var scale = Random.Range(.1f, 3) / transform.localScale.x;  // Make asteroid scale independent on Saturn's scale
+            var scale = Random.Range(.1f, 4) / transform.localScale.x;  // Make asteroid scale independent on Saturn's scale
             
             var asteroid = Instantiate(_asteroid, _asteroidsParent.transform, true);
             asteroid.transform.position = new Vector3(x, Random.value * 200 - 100, z);  // TODO: Make them more dense to y=0
             asteroid.transform.rotation = rotation;
             asteroid.transform.localScale = new Vector3(scale, scale, scale);
 
-            asteroid.GetComponent<Rigidbody>().mass = scale * 2000;
+            asteroid.GetComponent<Rigidbody>().mass = Mathf.Pow(scale + .8f, 3) * 1200;
             // Can't use this if isKinematic & non-convex properties are set to true
-            asteroid.GetComponent<Rigidbody>().AddRelativeTorque(rotation.eulerAngles / 10, ForceMode.Force);  // can use mass & force
+            // asteroid.GetComponent<Rigidbody>().AddRelativeTorque(rotation.eulerAngles * 100, ForceMode.Force);  // use mass
         }
 
         /*MeshFilter meshFilter = _saturnRing.GetComponent<MeshFilter>();
@@ -61,7 +61,7 @@ public class SaturnController : MonoBehaviour
     // Zdá se mi, že při FixedUpdate() je pohyb asteroidů méně sekaný než při Update()
     void FixedUpdate()
     {
-        transform.Rotate(Vector3.up, .1f * Time.fixedDeltaTime);
+        // transform.Rotate(Vector3.up, .1f * Time.fixedDeltaTime);
         
         // napiču rotace
         // foreach (Transform asteroid in _asteroidsParent.transform)
