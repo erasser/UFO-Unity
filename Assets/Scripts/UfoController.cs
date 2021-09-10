@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 // TODO:  Limit speed by applying magnitude of velocity vector, so speed of particular axes are not independent and so UFO has its 'total' max speed limit
+// TODO:  Try to apply <TrailRenderer>
 
 public class UfoController : MonoBehaviour
 {
@@ -39,7 +40,8 @@ public class UfoController : MonoBehaviour
         _ufoCamera = GameObject.Find("CameraUfo");
         _topCamera = GameObject.Find("CameraTop");
 
-        _initialCameraUfoDistance = _ufoCamera.transform.localPosition.z;  // It's set in editor and it's the minimum distance
+        if (_ufoCamera != null)
+            _initialCameraUfoDistance = _ufoCamera.transform.localPosition.z;  // It's set in editor and it's the minimum distance
 
         // _ufoForceBeam.GetComponent<CapsuleCollider>().enabled = false;
         _ufoForceBeam.SetActive(false);
@@ -68,7 +70,7 @@ public class UfoController : MonoBehaviour
             _ufoCamera.transform.Rotate(_forceBeamEnabled ? new Vector3(10, 0, 0) : new Vector3(-10, 0, 0));
         }
 
-        Performance.ShowFPS();
+        // Performance.ShowFPS();
     }
     
     void FixedUpdate()
@@ -187,6 +189,8 @@ public class UfoController : MonoBehaviour
 
     private void SetCameraUfoDistance()
     {
+        if (!_ufoCamera) return;
+        
         var localPosition = _ufoCamera.transform.localPosition;
         localPosition = new Vector3(
             localPosition.x,

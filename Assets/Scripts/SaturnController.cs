@@ -1,4 +1,5 @@
 using System;
+using Unity.VisualScripting;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -43,6 +44,10 @@ public class SaturnController : MonoBehaviour
             asteroid.GetComponent<Rigidbody>().mass = Mathf.Pow(scale + .8f, 3) * 1200;
             // Can't use this if isKinematic & non-convex properties are set to true
             // asteroid.GetComponent<Rigidbody>().AddRelativeTorque(rotation.eulerAngles * 100, ForceMode.Force);  // use mass
+            
+            // asteroid.GetComponent<Rigidbody>().AddComponent<ConstantForce>();
+            // var constantTorque = asteroid.GetComponent<ConstantForce>();
+            // constantTorque.relativeTorque = new Vector3(0,10,0);
         }
 
         /*MeshFilter meshFilter = _saturnRing.GetComponent<MeshFilter>();
@@ -64,11 +69,13 @@ public class SaturnController : MonoBehaviour
         // transform.Rotate(Vector3.up, .1f * Time.fixedDeltaTime);
         
         // napiču rotace
-        // foreach (Transform asteroid in _asteroidsParent.transform)
-        // {
-        //     var amount = 1 / asteroid.transform.localScale.x;
-        //     asteroid.transform.Rotate(asteroid.transform.eulerAngles, amount /*.1f*/);
-        // }
+        foreach (Transform asteroid in _asteroidsParent.transform)
+        {
+            // var amount = 1 / asteroid.transform.localScale.x;
+            // asteroid.transform.Rotate(asteroid.transform.eulerAngles, .9f);
+            // asteroid.transform.Rotate(new Vector3(0,1,0), .9f);
+            
+        }
 
     }
 }

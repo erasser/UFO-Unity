@@ -4,6 +4,6 @@ objects visibility?                                             Disable Mesh ren
 how to access object geometry, i.e. vertices data?              <MeshFilter> component!
 swapped y and z on UFO model (-90° x rotation)                  Solved by rotating pivot in 3ds Max
 Android build >:-(                                              https://forum.unity.com/threads/android-ndk-not-found.1111555
-classes                                                         Static methods can't call non-static ones & vice versa (or WTF is going on?).
-                                                                Class doesn't have to be imported.
+classes                                                         Class doesn't have to be imported.
                                                                 In Unity class must be inherited from MonoBehavior (contains print() and must be added as a component), ScriptableObject or nothing.
+PID controller                                                  Objects reaches a destination via physics https://answers.unity.com/questions/197225/pid-controller-simulation.html
