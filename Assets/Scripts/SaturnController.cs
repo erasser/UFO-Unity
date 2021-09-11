@@ -7,13 +7,22 @@ using Random = UnityEngine.Random;
 
 public class SaturnController : MonoBehaviour
 {
-    private GameObject _asteroid;
-    private GameObject _saturnRing;
-    private GameObject _asteroidsParent;
-    private const float TwoPI = 2 * Mathf.PI;
+    public GameObject asteroidPrefab;
+    public GameObject collisionSphere;
+
+    // private GameObject _asteroid;
+    // private GameObject _saturnRing;
+    // private GameObject _asteroidsParent;
+    // private const float TwoPI = 2 * Mathf.PI;
+
+
 
     void Start()
     {
+        GenerateAsteroids();
+        
+        
+        /*
         _asteroid = GameObject.Find("asteroid");
         _asteroidsParent = GameObject.Find("AsteroidsParent");
         // _saturnRing = GameObject.Find("SaturnRing");
@@ -50,17 +59,28 @@ public class SaturnController : MonoBehaviour
             // constantTorque.relativeTorque = new Vector3(0,10,0);
         }
 
-        /*MeshFilter meshFilter = _saturnRing.GetComponent<MeshFilter>();
-        _saturnRing.GetComponent<MeshRenderer>().enabled = false;
+        
+        // MeshFilter meshFilter = _saturnRing.GetComponent<MeshFilter>();
+        // _saturnRing.GetComponent<MeshRenderer>().enabled = false;
+        //
+        // for (var i = 0; i < meshFilter.mesh.vertexCount; i++)
+        // {
+        //     var asteroid = Instantiate(_asteroid, _saturnRing.transform, true);
+        //     asteroid.transform.position = meshFilter.mesh.vertices[i];
+        //     asteroid.transform.rotation = Random.rotation;
+        //     var scale = Random.value + .2f;
+        //     asteroid.transform.localScale = new Vector3(scale, scale, scale);
+        // }
+        */
+        
+        
+        
+    }
 
-        for (var i = 0; i < meshFilter.mesh.vertexCount; i++)
-        {
-            var asteroid = Instantiate(_asteroid, _saturnRing.transform, true);
-            asteroid.transform.position = meshFilter.mesh.vertices[i];
-            asteroid.transform.rotation = Random.rotation;
-            var scale = Random.value + .2f;
-            asteroid.transform.localScale = new Vector3(scale, scale, scale);
-        }*/
+    private void GenerateAsteroids(int count = 1000)
+    {
+        for (var i = 0; i < count; i++)
+            Instantiate(asteroidPrefab).GetComponent<AsteroidController>().Create(i, collisionSphere);
     }
 
     // Zdá se mi, že při FixedUpdate() je pohyb asteroidů méně sekaný než při Update()
@@ -69,13 +89,12 @@ public class SaturnController : MonoBehaviour
         // transform.Rotate(Vector3.up, .1f * Time.fixedDeltaTime);
         
         // napiču rotace
-        foreach (Transform asteroid in _asteroidsParent.transform)
-        {
+        // foreach (Transform asteroid in _asteroidsParent.transform)
+        // {
             // var amount = 1 / asteroid.transform.localScale.x;
             // asteroid.transform.Rotate(asteroid.transform.eulerAngles, .9f);
             // asteroid.transform.Rotate(new Vector3(0,1,0), .9f);
             
-        }
-
+        // }
     }
 }
