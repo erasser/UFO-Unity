@@ -7,3 +7,19 @@ Android build >:-(                                              https://forum.un
 classes                                                         Class doesn't have to be imported.
                                                                 In Unity class must be inherited from MonoBehavior (contains print() and must be added as a component), ScriptableObject or nothing.
 PID controller                                                  Objects reaches a destination via physics https://answers.unity.com/questions/197225/pid-controller-simulation.html
+
+
+
+ TODO
+══════
+• UFO auto-leveling
+• Add some weapons: laser
+• Add attachable probes with cameras
+• Try to add Saturn shadow: https://en.wikipedia.org/wiki/Saturn#/media/File:Saturn_from_Cassini_Orbiter_(2007-01-19).jpg
+• close camera when going backwards
+• Add rearview mirror https://docs.unity3d.com/Manual/class-RenderTexture.html
+• Add environment info (temperature, pressure, radiation, magnetism (planets magnetosphere)...)
+• Check this diffuse shake: https://pastebin.com/wT1Gihry
+• Implement cool brutal zooming
+• Universe map
+• Editor of UFO saucers

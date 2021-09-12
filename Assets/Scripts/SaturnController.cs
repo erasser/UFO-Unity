@@ -10,17 +10,9 @@ public class SaturnController : MonoBehaviour
     public GameObject asteroidPrefab;
     public GameObject collisionSphere;
 
-    // private GameObject _asteroid;
-    // private GameObject _saturnRing;
-    // private GameObject _asteroidsParent;
-    // private const float TwoPI = 2 * Mathf.PI;
-
-
-
     void Start()
     {
         GenerateAsteroids();
-        
         
         /*
         _asteroid = GameObject.Find("asteroid");
@@ -72,9 +64,6 @@ public class SaturnController : MonoBehaviour
         //     asteroid.transform.localScale = new Vector3(scale, scale, scale);
         // }
         */
-        
-        
-        
     }
 
     private void GenerateAsteroids(int count = 1000)

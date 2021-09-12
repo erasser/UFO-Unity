@@ -10,9 +10,12 @@ using Random = UnityEngine.Random;
 
 public class AsteroidController : MonoBehaviour
 {
+    private GameObject _saturnRingParticlesParent;
+
     private const float TwoPI = 2 * Mathf.PI;
-    private const int MinRadius = 2000;
-    private const int MaxRadius = 4000;
+    private const int RingsMinRadius = 3000;
+    private const int RingsMaxRadius = 6000;
+    private const int RingsThickness = 600;
     private Rigidbody _rigidBody;
     private GameObject _cubeHelper;
     private float _angle, _distance, _x, _y, _z, _scale;
@@ -23,16 +26,21 @@ public class AsteroidController : MonoBehaviour
     void Start()
     {
         _rigidBody = GetComponent<Rigidbody>();
+        _saturnRingParticlesParent = GameObject.Find("SaturnRingParticlesParent1");
     }
 
     private void Update()
     {
+        _saturnRingParticlesParent.transform.Rotate(new Vector3(0, 0, -.0004f * Time.deltaTime));
+        
         Performance.ShowFPS();
     }
 
     void FixedUpdate()
     {
         UpdateTransform();
+        
+
     }
 
     private void OnCollisionEnter(Collision other)
@@ -50,20 +58,20 @@ public class AsteroidController : MonoBehaviour
 
     public void Create(int i, GameObject collisionSphere)
     {
-        _distance = Random.Range(MinRadius, MaxRadius);
+        _distance = Random.Range(RingsMinRadius, RingsMaxRadius);
         _angle = Random.value * TwoPI;
         _x = Mathf.Cos(_angle) * _distance;
-        _y = Random.value * 400 - 200;
+        _y = Random.value * RingsThickness - RingsThickness / 2;
         _z = Mathf.Sin(_angle) * _distance;
+        
+// if (_distance == 0)
+//     print($"_distance: {_distance}");
 
-        // _x = 1000;
-        // _y = 0;
-        // _z = 1000;
         _rotation = Random.rotation;  // TODO: Isn't this in a range <0;PI>? (due to a character of quaternions)
 
         //           max  * /                   range <0;1>                      \  min size
         // var scale = 2 * (outerRadius - innerRadius) / (distance - innerRadius) + .1f;  // more distant => bigger asteroid
-        _scale = Random.Range(.1f, 4);
+        _scale = Random.Range(.1f, 3);  // TODO: 
         // _scale = 10;
         
         transform.SetPositionAndRotation(new Vector3(_x, _y, _z), _rotation);
@@ -91,15 +99,18 @@ public class AsteroidController : MonoBehaviour
 
     private void UpdateTransform()
     {
-        if (!_hasCollided)
-        {
-            _angle -= Time.fixedDeltaTime / 20;
-        
-            _x = Mathf.Cos(_angle) * _distance;
-            _z = Mathf.Sin(_angle) * _distance;
-            
-            _rigidBody.MovePosition(new Vector3(_x, _y, _z));
-        }
+        // TODO: Asteroids stops moving when collided by UFO. Solve it.
+
+        if (_hasCollided || name == "asteroid") return;  // TODO: Get rid of 'asteroid' (I already have a prefab, just delete the main asteroid from scene, or set it as inactive)
+
+        // closer to the planet => faster motion
+        // _angle -= RingsMaxRadius / _distance * Time.fixedDeltaTime / 100;
+        _angle -= Mathf.Pow(RingsMaxRadius / _distance, 4) * Time.fixedDeltaTime / 300;
+    
+        _x = Mathf.Cos(_angle) * _distance;
+        _z = Mathf.Sin(_angle) * _distance;
+
+        _rigidBody.MovePosition(new Vector3(_x, _y, _z));
 
         /* Další možnost: Každej by mohl mít svýho parenta, kterej by s ním točil = obdobnej přístup jako ten úplně původní */
     }
