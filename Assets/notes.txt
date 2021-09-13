@@ -11,9 +11,10 @@ PID controller                                                  Objects reaches 
 
  TODO
 ══════
+••• Neni tam náhodou stále ten defaultní Skybox (nebo jak se to jmenuje?) Ukázal se při buildu
 • Přiblížit vnitřní okraj prstence k Saturnu
 • UFO auto-leveling
-• Add some weapons: laser
+• Add some weapons: laser (look into assets)
 • Add attachable probes with cameras
 • Try to add Saturn shadow: https://en.wikipedia.org/wiki/Saturn#/media/File:Saturn_from_Cassini_Orbiter_(2007-01-19).jpg
 • close camera when going backwards
@@ -25,10 +26,7 @@ PID controller                                                  Objects reaches 
 • Editor of UFO saucers
 • lens flare
 • add somersault move (salto)
-
- BUG
-═════
-
+• Try ASCII renderer (look into assets)
 
  levels
 ════════

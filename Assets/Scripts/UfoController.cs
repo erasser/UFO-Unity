@@ -28,6 +28,7 @@ public class UfoController : MonoBehaviour
     private static Text _infoText;         // UI element
     private Vector3 _velocityCoefficient;
     private int _rotationCoefficient;
+    public FixedJoystick joystick;
     
     void Start()
     {
@@ -78,8 +79,6 @@ public class UfoController : MonoBehaviour
     {
         _ufoLights.transform.Rotate(0, 0, Time.fixedDeltaTime * -100);
 
-        MoveUfo();
-        
         ApplyForceBeam();
         
         if (Input.GetKey(KeyCode.R))  // auto level
@@ -94,10 +93,32 @@ public class UfoController : MonoBehaviour
                 _ufoRigidBody.transform.eulerAngles.z / -5000
                 ), ForceMode.VelocityChange);  // TODO: Try replacing with RotateLocal to remove inertia
         }
+
+            // Vector3 direction = Vector3.forward * joystick.Vertical + Vector3.right * joystick.Horizontal; 
+        MoveUfo();
     }
 
     private void MoveUfo()
     {
+
+        if (joystick.Direction.magnitude > 0)
+        {
+            if (joystick.Direction.x != 0)
+                _ufoRotationChange.y = 8 * Time.fixedDeltaTime * joystick.Direction.x;
+            else
+                _ufoRotationChange.y = 0;
+
+            if (joystick.Direction.y != 0)
+                _ufoVelocityChange.z = 60 * Time.fixedDeltaTime * joystick.Direction.y;
+            else
+                _ufoVelocityChange.z = 0;
+
+            _infoText.text = _ufoRigidBody.velocity.magnitude.ToString();
+            _ufoRigidBody.AddRelativeForce(_ufoVelocityChange, ForceMode.VelocityChange);
+            _ufoRigidBody.AddRelativeTorque(_ufoRotationChange, ForceMode.VelocityChange);
+            goto skipKeyboard;
+        }
+
         /******* MOVEMENT *******/
         if (Input.GetKey(KeyCode.LeftShift))
         {
@@ -193,7 +214,7 @@ public class UfoController : MonoBehaviour
         // }
 
         // AlignUfoCamera();
-
+skipKeyboard:
         SetCameraUfoDistance();
         
         AlignTopCamera();

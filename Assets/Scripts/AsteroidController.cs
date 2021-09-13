@@ -26,21 +26,19 @@ public class AsteroidController : MonoBehaviour
     void Start()
     {
         _rigidBody = GetComponent<Rigidbody>();
-        _saturnRingParticlesParent = GameObject.Find("SaturnRingParticlesParent1");
+        // _saturnRingParticlesParent = GameObject.Find("SaturnRingParticlesParent1");
     }
 
     private void Update()
     {
-        _saturnRingParticlesParent.transform.Rotate(new Vector3(0, 0, -.0004f * Time.deltaTime));
+        // _saturnRingParticlesParent.transform.Rotate(new Vector3(0, 0, -.0004f * Time.deltaTime));
         
         Performance.ShowFPS();
     }
 
     void FixedUpdate()
     {
-        // UpdateTransform();
-        
-
+        UpdateTransform();
     }
 
     private void OnCollisionEnter(Collision other)
