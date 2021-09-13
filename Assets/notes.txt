@@ -9,9 +9,9 @@ classes                                                         Class doesn't ha
 PID controller                                                  Objects reaches a destination via physics https://answers.unity.com/questions/197225/pid-controller-simulation.html
 
 
-
  TODO
 ══════
+• Přiblížit vnitřní okraj prstence k Saturnu
 • UFO auto-leveling
 • Add some weapons: laser
 • Add attachable probes with cameras
@@ -23,3 +23,14 @@ PID controller                                                  Objects reaches 
 • Implement cool brutal zooming
 • Universe map
 • Editor of UFO saucers
+• lens flare
+• add somersault move (salto)
+
+ BUG
+═════
+
+
+ levels
+════════
+• simulator (tutorial)
+• Area 51 (escape? attack? stealth?)

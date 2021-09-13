@@ -21,12 +21,13 @@ public class UfoController : MonoBehaviour
     private static GameObject _arrowHelper;
     private static GameObject _cubeHelper;
     private GameObject _ufoCamera;
-    private float _initialCameraUfoDistance;
+    private Vector3 _initialCameraUfoLocalPosition;
     private GameObject _topCamera;
     private float _timeInterval;
     private static bool _forceBeamEnabled;
     private static Text _infoText;         // UI element
-    private const int MAXSpeed = 5;     // Now the drag property takes care of this
+    private Vector3 _velocityCoefficient;
+    private int _rotationCoefficient;
     
     void Start()
     {
@@ -41,7 +42,7 @@ public class UfoController : MonoBehaviour
         _topCamera = GameObject.Find("CameraTop");
 
         if (_ufoCamera != null)
-            _initialCameraUfoDistance = _ufoCamera.transform.localPosition.z;  // It's set in editor and it's the minimum distance
+            _initialCameraUfoLocalPosition = _ufoCamera.transform.localPosition;  // It's set in editor and it's the minimum distance
 
         // _ufoForceBeam.GetComponent<CapsuleCollider>().enabled = false;
         _ufoForceBeam.SetActive(false);
@@ -79,6 +80,8 @@ public class UfoController : MonoBehaviour
 
         MoveUfo();
         
+        ApplyForceBeam();
+        
         if (Input.GetKey(KeyCode.R))  // auto level
         {
             // _ufoRigidBody.transform.rotation = Quaternion.Euler(0, _ufoRigidBody.transform.rotation.y, 0);
@@ -96,21 +99,32 @@ public class UfoController : MonoBehaviour
     private void MoveUfo()
     {
         /******* MOVEMENT *******/
-        var velocityCoefficient = Input.GetKey(KeyCode.LeftShift) ? 10 : 1;
+        if (Input.GetKey(KeyCode.LeftShift))
+        {
+            _velocityCoefficient.x = 3;     // left / right
+            _velocityCoefficient.y = 2;     // up / down
+            _velocityCoefficient.z = 10;    // forward / backward
+            _rotationCoefficient = 2;
+        }
+        else
+        {
+            _velocityCoefficient = Vector3.one;
+            _rotationCoefficient = 1;
+        }
 
         // TODO: Either one of these should be valid. If both are pressed, behave as none of them is pressed.
         if (Input.GetKey(KeyCode.Space))  // Accelerate depending of key pressed
-            _ufoVelocityChange.y = 20 * Time.fixedDeltaTime;
+            _ufoVelocityChange.y = 20 * Time.fixedDeltaTime * _velocityCoefficient.y;
         else if (Input.GetKey(KeyCode.LeftControl))
-            _ufoVelocityChange.y = -20 * Time.fixedDeltaTime;
+            _ufoVelocityChange.y = -20 * Time.fixedDeltaTime * _velocityCoefficient.y;
         else                              // No up/down key pressed, apply no force
             _ufoVelocityChange.y = 0;
 
         // TODO: Either one of these should be valid. If both are pressed, behave as none of them is pressed.
         if (Input.GetKey(KeyCode.W))      // Accelerate depending of key pressed
-            _ufoVelocityChange.z = 30 * Time.fixedDeltaTime * velocityCoefficient;
+            _ufoVelocityChange.z = 30 * Time.fixedDeltaTime * _velocityCoefficient.z;
         else if (Input.GetKey(KeyCode.S))
-            _ufoVelocityChange.z = -30 * Time.fixedDeltaTime * velocityCoefficient;
+            _ufoVelocityChange.z = -30 * Time.fixedDeltaTime * _velocityCoefficient.z;
         else                              // No forward/backward key pressed, apply no force to horizontal z
         {
             _ufoVelocityChange.z = 0;
@@ -119,9 +133,9 @@ public class UfoController : MonoBehaviour
         }
 
         if (Input.GetKey(KeyCode.Q))
-            _ufoVelocityChange.x = -20 * Time.fixedDeltaTime;
+            _ufoVelocityChange.x = -20 * Time.fixedDeltaTime * _velocityCoefficient.x;
         else if (Input.GetKey(KeyCode.E))
-            _ufoVelocityChange.x = 20 * Time.fixedDeltaTime;
+            _ufoVelocityChange.x = 20 * Time.fixedDeltaTime * _velocityCoefficient.x;
         else
             _ufoVelocityChange.x = 0;
 
@@ -150,12 +164,12 @@ public class UfoController : MonoBehaviour
         // TODO: Either one of these should be valid. If both are pressed, behave as none of them is pressed.
         if (Input.GetKey(KeyCode.A))
         {
-            _ufoRotationChange.y = -8 * Time.fixedDeltaTime;
+            _ufoRotationChange.y = -8 * Time.fixedDeltaTime * _rotationCoefficient;
             // _ufoRotationChange.y = -80 / (10f + _ufoRigidBody.velocity.magnitude * 3);  // there is also sqrMagnitude
         }
         else if (Input.GetKey(KeyCode.D))
         {
-            _ufoRotationChange.y = 8 * Time.fixedDeltaTime;
+            _ufoRotationChange.y = 8 * Time.fixedDeltaTime * _rotationCoefficient;
         }
         else
         {
@@ -183,23 +197,50 @@ public class UfoController : MonoBehaviour
         SetCameraUfoDistance();
         
         AlignTopCamera();
-
-        ApplyForceBeam();
     }
 
-    private void SetCameraUfoDistance()
+    private void SetCameraUfoDistance()  // TODO: Rename
     {
         if (!_ufoCamera) return;
+
+        var localVelocity = transform.InverseTransformDirection(_ufoRigidBody.velocity);
+
         
-        var localPosition = _ufoCamera.transform.localPosition;
-        localPosition = new Vector3(
-            localPosition.x,
-            localPosition.y,
-            // _initialCameraUfoDistance - _ufoRigidBody.velocity.z / 4
-            _initialCameraUfoDistance - _ufoRigidBody.velocity.magnitude / 4
-            // _initialCameraUfoDistance
+        // TODOO:  • Apply camera target.  • Invert forward/backward camera position
+        
+        _ufoCamera.transform.localEulerAngles = new Vector3(
+            - localVelocity.y / 2,    // pitch
+            localVelocity.x / 8,    // yaw
+            - _ufoRigidBody.angularVelocity.y * 3  // roll
+            // - Mathf.Asin(_ufoRigidBody.angularVelocity.y) * 3  // can cause NaN
         );
-        _ufoCamera.transform.localPosition = localPosition;
+
+        var zCoefficient = localVelocity.z > 0 ? 6 : 18;
+        
+        _ufoCamera.transform.localPosition = new Vector3(
+            0,
+            _initialCameraUfoLocalPosition.y,
+            _initialCameraUfoLocalPosition.z - localVelocity.z / zCoefficient
+        );
+
+        /* Replaced by camera rotation
+        // var localVelocity = transform.rotation * _ufoRigidBody.velocity;  // has no effect :-/
+        var localVelocity = transform.InverseTransformDirection(_ufoRigidBody.velocity);
+
+        var xCoefficient = Math.Abs(localVelocity.x) > 10 ? 10 : 50;
+        var yCoefficient = Math.Abs(localVelocity.y) > 10 ? 12 : 60;
+        var zCoefficient = localVelocity.z > 0 ? 6 : 18;
+        
+        _ufoCamera.transform.localPosition = new Vector3(
+            localVelocity.x / xCoefficient,
+            _initialCameraUfoLocalPosition.y + localVelocity.y / yCoefficient,
+            _initialCameraUfoLocalPosition.z - localVelocity.z / zCoefficient
+
+            // This approach looks a bit unnatural (i.e. implies unnatural sense of motion) 
+            // SignedSqrt(localVelocity.x) / 3,
+            // _initialCameraUfoLocalPosition.y + SignedSqrt(localVelocity.y) / 4,
+            // _initialCameraUfoLocalPosition.z - SignedSqrt(localVelocity.z) / 2
+        );*/
     }
     
     private void AlignUfoCamera()
@@ -268,5 +309,11 @@ public class UfoController : MonoBehaviour
         Vector3 newVector = vectorToUpdate;
         newVector[index] = value;
         vectorToUpdate = newVector;
+    }
+
+    private static float SignedSqrt(float number)
+    {
+        // square root ↓ of ↓ positive number respecting ↓ lost sign
+        return Mathf.Sqrt(Math.Abs(number)) * Mathf.Sign(number);
     }
 }

@@ -38,7 +38,7 @@ public class AsteroidController : MonoBehaviour
 
     void FixedUpdate()
     {
-        UpdateTransform();
+        // UpdateTransform();
         
 
     }
