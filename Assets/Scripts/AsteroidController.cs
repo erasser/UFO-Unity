@@ -13,7 +13,7 @@ public class AsteroidController : MonoBehaviour
     // private GameObject _saturnRingParticlesParent;
 
     private const float TwoPI = 2 * Mathf.PI;
-    private const int RingsMinRadius = 300;
+    private const int RingsMinRadius = 200;
     private const int RingsMaxRadius = 600;
     private const int RingsThickness = 60;
     private Rigidbody _rigidBody;
@@ -38,7 +38,7 @@ public class AsteroidController : MonoBehaviour
 
     void FixedUpdate()
     {
-        // UpdateTransform();
+        UpdateTransform();
     }
 
     private void OnCollisionEnter(Collision other)

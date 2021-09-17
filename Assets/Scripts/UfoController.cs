@@ -4,6 +4,7 @@ using System;
 // using Unity.VisualScripting;
 // using UnityEngine.Rendering;
 using UnityEngine;
+using UnityEngine.Android;
 using UnityEngine.UI;
 
 // TODO:  Limit speed by applying magnitude of velocity vector, so speed of particular axes are not independent and so UFO has its 'total' max speed limit
@@ -30,9 +31,10 @@ public class UfoController : MonoBehaviour
     private static Text _infoText;         // UI element
     private Vector3 _velocityCoefficient;
     private int _rotationCoefficient;
+    private const int AutoLevelingDuration = 2;  // seconds
     private bool _isAutoLeveling;  // TODO: Just _autoLevelingTime or _fromTransform could be used
     private float _autoLevelingTime;
-    private Transform _fromTransform;
+    private Quaternion _fromUfoQuaternion;
     
     void Start()
     {
@@ -86,9 +88,6 @@ public class UfoController : MonoBehaviour
             ), ForceMode.VelocityChange);*/ // TODO: Try replacing with RotateLocal to remove inertia
         }
 
-        if (_isAutoLeveling)
-            UpdateAutoLeveling();
-
         // if (Input.GetKeyDown(KeyCode.F))  // switch force field
         // {
         //     _forceBeamEnabled = !_forceBeamEnabled;
@@ -104,6 +103,9 @@ public class UfoController : MonoBehaviour
 
         // ApplyForceBeam();
 
+        if (_isAutoLeveling)
+            UpdateAutoLeveling();
+        
         MoveUfo();
     }
 
@@ -369,33 +371,36 @@ public class UfoController : MonoBehaviour
             return;
             
         _isAutoLeveling = true;
-        _fromTransform = _ufoRigidBody.transform;
+        _fromUfoQuaternion = _ufoRigidBody.transform.rotation;  // .transform is a reference, while Quaternion is a struct
         _autoLevelingTime = 0;
-        print("START");
     }
     
     private void UpdateAutoLeveling()
     {
-        _autoLevelingTime += Time.deltaTime;
+        // TODO: What if it will collide while auto leveling?
+        _autoLevelingTime += Time.fixedDeltaTime;
 
-        if (_autoLevelingTime >= 5)  // TODO: Use constant
-        {
-            print("STOP");
-            _isAutoLeveling = false;
-            _autoLevelingTime = 0;
-            return;
-        }
+        float phase;
+        if (_autoLevelingTime < AutoLevelingDuration)
+            phase = _autoLevelingTime / AutoLevelingDuration;            
+        else
+            phase = 1;
         
-        var phase = _autoLevelingTime / 5;  // total auto leveling time in seconds
         _ufoRigidBody.rotation = Quaternion.Lerp(
-            _fromTransform.rotation,
+            _fromUfoQuaternion,
             Quaternion.Euler(
                 new Vector3(
                     0,
-                    _fromTransform.eulerAngles.y,
+                    _fromUfoQuaternion.eulerAngles.y,
                     0)
             ), phase
         );
+
+        if (phase == 1)  // I've set 1 before, so fuck fuck Rider here
+        {
+            _isAutoLeveling = false;
+            _autoLevelingTime = 0;
+        }
     }
 
     private void OnCollisionEnter(Collision other)
