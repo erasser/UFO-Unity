@@ -8,11 +8,12 @@ using Random = UnityEngine.Random;
 public class SaturnController : MonoBehaviour
 {
     public GameObject asteroidPrefab;
-    public GameObject collisionSphere;
+    //public GameObject collisionSphere;
 
     void Start()
     {
-        GenerateAsteroids(800);
+        asteroidPrefab = GameObject.Find("asteroid_low_poly");
+        GenerateAsteroids(1000);
         
         /*
         _asteroid = GameObject.Find("asteroid");
@@ -69,7 +70,9 @@ public class SaturnController : MonoBehaviour
     private void GenerateAsteroids(int count = 1000)
     {
         for (var i = 0; i < count; i++)
-            Instantiate(asteroidPrefab).GetComponent<AsteroidController>().Create(i, collisionSphere);
+            Instantiate(asteroidPrefab)
+                .GetComponent<AsteroidController>()
+                .Create(i/*, collisionSphere*/);
     }
 
     // Zdá se mi, že při FixedUpdate() je pohyb asteroidů méně sekaný než při Update()

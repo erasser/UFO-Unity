@@ -32,9 +32,9 @@ public class UfoController : MonoBehaviour
     
     void Start()
     {
-        _ufo = GameObject.Find("UFO");      // TODO: This is this! :D  // Odstranit _ufo z této třídy, zbytečné
-        _ufoRigidBody = _ufo.GetComponent<Rigidbody>();
-        _ufoLights = GameObject.Find("UfoLights");
+        // _ufo = GameObject.Find("UFO_low_poly");      // TODO: This is this! :D  // Odstranit _ufo z této třídy, zbytečné
+        _ufoRigidBody = GetComponent<Rigidbody>();
+        // _ufoLights = GameObject.Find("UfoLights");
         _ufoForceBeam = GameObject.Find("ForceBeam");
         _infoText = GameObject.Find("InfoText").GetComponent<Text>();
         _arrowHelper = GameObject.Find("arrow");
@@ -46,13 +46,15 @@ public class UfoController : MonoBehaviour
             _initialCameraUfoLocalPosition = _ufoCamera.transform.localPosition;  // It's set in editor and it's the minimum distance
 
         // _ufoForceBeam.GetComponent<CapsuleCollider>().enabled = false;
-        _ufoForceBeam.SetActive(false);
+        // _ufoForceBeam.SetActive(false);
         
         // _arrowHelper.GetComponent<MeshRenderer>().enabled = false;
     }
 
     void Update()
     {
+        Performance.ShowFPS();
+        
         if (Input.GetKeyDown(KeyCode.G))  // switch gravity
         {
             var drag = _ufoRigidBody.drag;
@@ -64,23 +66,23 @@ public class UfoController : MonoBehaviour
                 _ufoRigidBody.drag = drag;
         }
 
-        if (Input.GetKeyDown(KeyCode.F))  // switch force field
-        {
-            _forceBeamEnabled = !_forceBeamEnabled;
-            _ufoForceBeam.SetActive(_forceBeamEnabled);
-        
-            _ufoCamera.transform.Rotate(_forceBeamEnabled ? new Vector3(10, 0, 0) : new Vector3(-10, 0, 0));
-        }
+        // if (Input.GetKeyDown(KeyCode.F))  // switch force field
+        // {
+        //     _forceBeamEnabled = !_forceBeamEnabled;
+        //     _ufoForceBeam.SetActive(_forceBeamEnabled);
+        //
+        //     _ufoCamera.transform.Rotate(_forceBeamEnabled ? new Vector3(10, 0, 0) : new Vector3(-10, 0, 0));
+        // }
 
         // Performance.ShowFPS();
     }
     
     void FixedUpdate()
     {
-        _ufoLights.transform.Rotate(0, 0, Time.fixedDeltaTime * -100);
+        // _ufoLights.transform.Rotate(0, 0, Time.fixedDeltaTime * -100);
 
-        ApplyForceBeam();
-        
+        // ApplyForceBeam();
+/*
         if (Input.GetKey(KeyCode.R))  // auto level
         {
             // _ufoRigidBody.transform.rotation = Quaternion.Euler(0, _ufoRigidBody.transform.rotation.y, 0);
@@ -93,7 +95,7 @@ public class UfoController : MonoBehaviour
                 _ufoRigidBody.transform.eulerAngles.z / -5000
                 ), ForceMode.VelocityChange);  // TODO: Try replacing with RotateLocal to remove inertia
         }
-
+*/
             // Vector3 direction = Vector3.forward * joystick.Vertical + Vector3.right * joystick.Horizontal; 
         MoveUfo();
     }
@@ -104,19 +106,21 @@ public class UfoController : MonoBehaviour
         if (joystick.Direction.magnitude > 0)
         {
             if (joystick.Direction.x != 0)
-                _ufoRotationChange.y = 8 * Time.fixedDeltaTime * joystick.Direction.x;
+                _ufoRotationChange.y = 10 * Time.fixedDeltaTime * joystick.Direction.x;
             else
                 _ufoRotationChange.y = 0;
 
             if (joystick.Direction.y != 0)
-                _ufoVelocityChange.z = 60 * Time.fixedDeltaTime * joystick.Direction.y;
+                _ufoVelocityChange.z = 120 * Time.fixedDeltaTime * joystick.Direction.y;
             else
                 _ufoVelocityChange.z = 0;
 
             _infoText.text = _ufoRigidBody.velocity.magnitude.ToString();
             _ufoRigidBody.AddRelativeForce(_ufoVelocityChange, ForceMode.VelocityChange);
             _ufoRigidBody.AddRelativeTorque(_ufoRotationChange, ForceMode.VelocityChange);
-            goto skipKeyboard;
+            SetCameraUfoDistance();
+            AlignTopCamera();
+            return;
         }
 
         /******* MOVEMENT *******/
@@ -214,7 +218,7 @@ public class UfoController : MonoBehaviour
         // }
 
         // AlignUfoCamera();
-skipKeyboard:
+
         SetCameraUfoDistance();
         
         AlignTopCamera();
@@ -231,8 +235,8 @@ skipKeyboard:
         
         _ufoCamera.transform.localEulerAngles = new Vector3(
             - localVelocity.y / 2,    // pitch
-            localVelocity.x / 8,    // yaw
-            - _ufoRigidBody.angularVelocity.y * 3  // roll
+            localVelocity.x / 8,      // yaw
+            - _ufoRigidBody.angularVelocity.y * 5  // roll
             // - Mathf.Asin(_ufoRigidBody.angularVelocity.y) * 3  // can cause NaN
         );
 
