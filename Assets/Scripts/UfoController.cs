@@ -11,6 +11,8 @@ using UnityEngine.UI;
 
 public class UfoController : MonoBehaviour
 {
+    public FixedJoystick joystickHorizontalPlane;
+    public FixedJoystick joystickVerticalPlane;
     // I don't know why I did it static
     private static GameObject _ufo;
     private static GameObject _ufoLights;
@@ -28,8 +30,9 @@ public class UfoController : MonoBehaviour
     private static Text _infoText;         // UI element
     private Vector3 _velocityCoefficient;
     private int _rotationCoefficient;
-    public FixedJoystick joystickHorizontalPlane;
-    public FixedJoystick joystickVerticalPlane;
+    private bool _isAutoLeveling;  // TODO: Just _autoLevelingTime or _fromTransform could be used
+    private float _autoLevelingTime;
+    private Transform _fromTransform;
     
     void Start()
     {
@@ -42,6 +45,7 @@ public class UfoController : MonoBehaviour
         _cubeHelper = GameObject.Find("CubeHelper");
         _ufoCamera = GameObject.Find("CameraUfo");
         _topCamera = GameObject.Find("CameraTop");
+        
 
         if (_ufoCamera != null)
             _initialCameraUfoLocalPosition = _ufoCamera.transform.localPosition;  // It's set in editor and it's the minimum distance
@@ -67,6 +71,24 @@ public class UfoController : MonoBehaviour
                 _ufoRigidBody.drag = drag;
         }
 
+        if (Input.GetKey(KeyCode.R))  // auto level
+        {
+            InitiateAutoLeveling();
+            
+            // _ufoRigidBody.transform.rotation = Quaternion.Euler(0, _ufoRigidBody.transform.rotation.y, 0);
+            // TODO: Do auto leveling by adding torque
+
+            // _ufoRigidBody.AddRelativeTorque(new Vector3(0,0,.1f), ForceMode.VelocityChange);
+            /*_ufoRigidBody.AddRelativeTorque(new Vector3(
+                _ufoRigidBody.transform.eulerAngles.x / -5000,
+                0,
+                _ufoRigidBody.transform.eulerAngles.z / -5000
+            ), ForceMode.VelocityChange);*/ // TODO: Try replacing with RotateLocal to remove inertia
+        }
+
+        if (_isAutoLeveling)
+            UpdateAutoLeveling();
+
         // if (Input.GetKeyDown(KeyCode.F))  // switch force field
         // {
         //     _forceBeamEnabled = !_forceBeamEnabled;
@@ -74,8 +96,6 @@ public class UfoController : MonoBehaviour
         //
         //     _ufoCamera.transform.Rotate(_forceBeamEnabled ? new Vector3(10, 0, 0) : new Vector3(-10, 0, 0));
         // }
-
-        // Performance.ShowFPS();
     }
     
     void FixedUpdate()
@@ -83,20 +103,7 @@ public class UfoController : MonoBehaviour
         // _ufoLights.transform.Rotate(0, 0, Time.fixedDeltaTime * -100);
 
         // ApplyForceBeam();
-/*
-        if (Input.GetKey(KeyCode.R))  // auto level
-        {
-            // _ufoRigidBody.transform.rotation = Quaternion.Euler(0, _ufoRigidBody.transform.rotation.y, 0);
-            // TODO: Do auto leveling by adding torque
-            
-            // _ufoRigidBody.AddRelativeTorque(new Vector3(0,0,.1f), ForceMode.VelocityChange);
-            _ufoRigidBody.AddRelativeTorque(new Vector3(
-                _ufoRigidBody.transform.eulerAngles.x / -5000,
-                0,
-                _ufoRigidBody.transform.eulerAngles.z / -5000
-                ), ForceMode.VelocityChange);  // TODO: Try replacing with RotateLocal to remove inertia
-        }
-*/
+
         MoveUfo();
     }
 
@@ -119,12 +126,12 @@ public class UfoController : MonoBehaviour
             if (joystickVerticalPlane.Direction.magnitude > 0)
             {
                 if (joystickVerticalPlane.Direction.x != 0)
-                    _ufoVelocityChange.x = 40 * Time.fixedDeltaTime * joystickHorizontalPlane.Direction.x;
+                    _ufoVelocityChange.x = 40 * Time.fixedDeltaTime * joystickVerticalPlane.Direction.x;
                 else
                     _ufoVelocityChange.x = 0;
 
                 if (joystickVerticalPlane.Direction.y != 0)
-                    _ufoVelocityChange.y = 40 * Time.fixedDeltaTime * joystickHorizontalPlane.Direction.y;
+                    _ufoVelocityChange.y = 40 * Time.fixedDeltaTime * joystickVerticalPlane.Direction.y;
                 else
                     _ufoVelocityChange.y = 0;
             }
@@ -354,5 +361,45 @@ public class UfoController : MonoBehaviour
     {
         // square root ↓ of ↓ positive number respecting ↓ lost sign
         return Mathf.Sqrt(Math.Abs(number)) * Mathf.Sign(number);
+    }
+
+    private void InitiateAutoLeveling()
+    {
+        if (_isAutoLeveling)
+            return;
+            
+        _isAutoLeveling = true;
+        _fromTransform = _ufoRigidBody.transform;
+        _autoLevelingTime = 0;
+        print("START");
+    }
+    
+    private void UpdateAutoLeveling()
+    {
+        _autoLevelingTime += Time.deltaTime;
+
+        if (_autoLevelingTime >= 5)  // TODO: Use constant
+        {
+            print("STOP");
+            _isAutoLeveling = false;
+            _autoLevelingTime = 0;
+            return;
+        }
+        
+        var phase = _autoLevelingTime / 5;  // total auto leveling time in seconds
+        _ufoRigidBody.rotation = Quaternion.Lerp(
+            _fromTransform.rotation,
+            Quaternion.Euler(
+                new Vector3(
+                    0,
+                    _fromTransform.eulerAngles.y,
+                    0)
+            ), phase
+        );
+    }
+
+    private void OnCollisionEnter(Collision other)
+    {
+        InitiateAutoLeveling();
     }
 }
