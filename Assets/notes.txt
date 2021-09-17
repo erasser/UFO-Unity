@@ -1,4 +1,6 @@
-﻿ issue                                                           solution
+﻿GIT token                                                       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
+
+ issue                                                           solution
 ═══════                                                         ══════════
 objects visibility?                                             Disable Mesh renderer
 how to access object geometry, i.e. vertices data?              <MeshFilter> component!

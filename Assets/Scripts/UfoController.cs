@@ -28,7 +28,8 @@ public class UfoController : MonoBehaviour
     private static Text _infoText;         // UI element
     private Vector3 _velocityCoefficient;
     private int _rotationCoefficient;
-    public FixedJoystick joystick;
+    public FixedJoystick joystickHorizontalPlane;
+    public FixedJoystick joystickVerticalPlane;
     
     void Start()
     {
@@ -96,25 +97,38 @@ public class UfoController : MonoBehaviour
                 ), ForceMode.VelocityChange);  // TODO: Try replacing with RotateLocal to remove inertia
         }
 */
-            // Vector3 direction = Vector3.forward * joystick.Vertical + Vector3.right * joystick.Horizontal; 
         MoveUfo();
     }
 
     private void MoveUfo()
     {
+        // TODO: Refactor
 
-        if (joystick.Direction.magnitude > 0)
+        if (joystickHorizontalPlane.Direction.magnitude > 0 || joystickVerticalPlane.Direction.magnitude > 0)
         {
-            if (joystick.Direction.x != 0)
-                _ufoRotationChange.y = 10 * Time.fixedDeltaTime * joystick.Direction.x;
+            if (joystickHorizontalPlane.Direction.x != 0)
+                _ufoRotationChange.y = 10 * Time.fixedDeltaTime * joystickHorizontalPlane.Direction.x;
             else
                 _ufoRotationChange.y = 0;
 
-            if (joystick.Direction.y != 0)
-                _ufoVelocityChange.z = 120 * Time.fixedDeltaTime * joystick.Direction.y;
+            if (joystickHorizontalPlane.Direction.y != 0)
+                _ufoVelocityChange.z = 120 * Time.fixedDeltaTime * joystickHorizontalPlane.Direction.y;
             else
                 _ufoVelocityChange.z = 0;
 
+            if (joystickVerticalPlane.Direction.magnitude > 0)
+            {
+                if (joystickVerticalPlane.Direction.x != 0)
+                    _ufoVelocityChange.x = 40 * Time.fixedDeltaTime * joystickHorizontalPlane.Direction.x;
+                else
+                    _ufoVelocityChange.x = 0;
+
+                if (joystickVerticalPlane.Direction.y != 0)
+                    _ufoVelocityChange.y = 40 * Time.fixedDeltaTime * joystickHorizontalPlane.Direction.y;
+                else
+                    _ufoVelocityChange.y = 0;
+            }
+            
             _infoText.text = _ufoRigidBody.velocity.magnitude.ToString();
             _ufoRigidBody.AddRelativeForce(_ufoVelocityChange, ForceMode.VelocityChange);
             _ufoRigidBody.AddRelativeTorque(_ufoRotationChange, ForceMode.VelocityChange);
