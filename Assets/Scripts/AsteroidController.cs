@@ -18,12 +18,14 @@ public class AsteroidController : MonoBehaviour
     private const int RingsThickness = 60;
     private Rigidbody _rigidBody;
     private GameObject _cubeHelper;
-    private float _angle, _distance, _x, _y, _z, _scale;
-    private Quaternion _rotation;
-    private bool _hasCollided;
     private static bool _testSphereHasCollided;
     private Vector3 _tmpV3;
     private int _frames;
+    /* Individual attributes */
+    private float _angle, _distance, _x, _y, _z, _scale;
+    private Quaternion _rotation;
+    public Vector3 _torque;
+    private bool _hasCollided;
 
     void Start()
     {
@@ -56,6 +58,8 @@ public class AsteroidController : MonoBehaviour
 
     public void Create(int i/*, GameObject collisionSphere*/)
     {
+        name = $"asteroid_{i}";
+
         _distance = Random.Range(RingsMinRadius, RingsMaxRadius);
         _angle = Random.value * TwoPI;
         _x = Mathf.Cos(_angle) * _distance;
@@ -70,7 +74,7 @@ public class AsteroidController : MonoBehaviour
         //           max  * /                   range <0;1>                      \  min size
         // var scale = 2 * (outerRadius - innerRadius) / (distance - innerRadius) + .1f;  // more distant => bigger asteroid
         // _scale = Random.Range(.8f, 10);
-        _scale = Random.Range(.8f, 10);
+        _scale = Random.Range(.8f, 20);
 
 
         transform.SetPositionAndRotation(new Vector3(_x, _y, _z), _rotation);
@@ -78,15 +82,18 @@ public class AsteroidController : MonoBehaviour
         // transform.rotation = _rotation;  // TODO: Can be done in Instantiate()
         transform.localScale = new Vector3(_scale, _scale, _scale);
 
-        GetComponent<Rigidbody>().mass = Mathf.Pow(_scale + .8f, 3) * 100;
+        // GetComponent<Rigidbody>().mass = Mathf.Pow(_scale, 3) * 100;
+        GetComponent<Rigidbody>().mass = _scale * 100;
 
-        name = $"asteroid_{i}";
+        _torque = new Vector3(Random.value * 3, Random.value * 3, Random.value * 3);
+        if (_torque.magnitude > 2)  // Optimization: Do not apply, if torque would be too small
+            GetComponent<Rigidbody>().AddRelativeTorque(_torque, ForceMode.Acceleration);
 
         // TODO: Udělat to na správnym místě, nedělat zbytečný výpočty
 //        collisionSphere.GetComponent<SphereCollider>().radius = 24.3f * _scale;
 //        collisionSphere.transform.SetPositionAndRotation(new Vector3(_x, _y, _z), _rotation);
         // print("has collided? :" + _testSphereHasCollided);
-        
+
         // Can't use this if isKinematic & non-convex properties are set to false
         // asteroid.GetComponent<Rigidbody>().AddRelativeTorque(rotation.eulerAngles * 100, ForceMode.Force);  // use mass
 
@@ -101,16 +108,16 @@ public class AsteroidController : MonoBehaviour
         // Zkusit pro pohyb 1 parenta (nepomohlo)
         // Zkusit transformovat jen viditelné - z toho mám strach, vznikaly by kolize buď mimo kameru nebo po updatu pozice (asi by k tomu ale docházelo zcela výjimečně) + asi určitě by byl hodně variabilní framerate
         // Zkusit přeskočit n snímků (pomohlo)
-        
-        if (_frames++ % 3 != 0) return;
-        
+
+        // if (_frames++ % 2 != 0) return;  // Or Project settings -> Time -> Fixed timestep (default = .02 ms)
+
         // TODO: Asteroids stops moving when collided by UFO. Solve it.
 
         if (_hasCollided || name == "asteroid") return;  // TODO: Get rid of 'asteroid' (I already have a prefab, just delete the main asteroid from scene, or set it as inactive)
 if (_distance == 0) return;
         // closer to the planet => faster motion
         // _angle -= RingsMaxRadius / _distance * Time.fixedDeltaTime / 100;
-        _angle -= Mathf.Pow(RingsMaxRadius / _distance, 4) * Time.fixedDeltaTime / 300;
+        _angle -= Mathf.Pow(RingsMaxRadius / _distance, 3) * Time.fixedDeltaTime / 400;
 
         _x = Mathf.Cos(_angle) * _distance;
         _z = Mathf.Sin(_angle) * _distance;
@@ -118,7 +125,9 @@ if (_distance == 0) return;
         // _rigidBody.MovePosition(new Vector3(_x, _y, _z));  // It takes interpolation into account.
         _rigidBody.position = new Vector3(_x, _y, _z);
 
-        /* Další možnost: Každej by mohl mít svýho parenta, kterej by s ním točil = obdobnej přístup jako ten úplně původní */
+        // _rigidBody.AddRelativeTorque(_torque, ForceMode.VelocityChange);
+
+        /* Další možnost: Každej by mohl mít svýho parenta, kterej by s ním točil = obdobnej přístup jako ten úplně původní (vyzkoušeno, výkonově nepomohlo) */
     }
 
     public static void CollidedAsteroid()

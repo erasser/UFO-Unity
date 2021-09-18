@@ -10,7 +10,6 @@ classes                                                         Class doesn't ha
                                                                 In Unity class must be inherited from MonoBehavior (contains print() and must be added as a component), ScriptableObject or nothing.
 PID controller                                                  Objects reaches a destination via physics https://answers.unity.com/questions/197225/pid-controller-simulation.html
 
-
  TODO
 ══════
 ••• Neni tam náhodou stále ten defaultní Skybox (nebo jak se to jmenuje?) Ukázal se při buildu
@@ -34,3 +33,10 @@ PID controller                                                  Objects reaches 
 ════════
 • simulator (tutorial)
 • Area 51 (escape? attack? stealth?)
+
+ physics
+═════════
+////   Force	        Add a continuous force to the rigidbody, using its mass.                \\\\
+////   Acceleration	    Add a continuous acceleration to the rigidbody, ignoring its mass.      \\\\
+////   Impulse	        Add an instant force impulse to the rigidbody, using its mass.          \\\\
+////   VelocityChange	Add an instant velocity change to the rigidbody, ignoring its mass.     \\\\

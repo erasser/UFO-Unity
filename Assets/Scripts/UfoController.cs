@@ -19,7 +19,7 @@ public class UfoController : MonoBehaviour
     private static GameObject _ufoLights;
     private static GameObject _ufoForceBeam;
     private static Rigidbody _ufoRigidBody;
-    private Vector3 _ufoVelocityChange;  // Add an instant velocity change to the rigidbody (ignoring its mass)
+    private static Vector3 _ufoVelocityChange;  // Add an instant velocity change to the rigidbody (ignoring its mass)
     private static Vector3 _ufoRotationChange;
     private static GameObject _arrowHelper;
     private static GameObject _cubeHelper;
@@ -105,13 +105,30 @@ public class UfoController : MonoBehaviour
 
         if (_isAutoLeveling)
             UpdateAutoLeveling();
-        
+   
         MoveUfo();
+        SetCameraUfoDistance();  // Do it although nothing is pressed, UFO can be moving due to inertia. Could be conditioned by velocity.magnitude.
+        AlignTopCamera();
+        // AlignUfoCamera();
     }
 
     private void MoveUfo()
     {
-        // TODO: Refactor
+        // _infoText.text = _ufoRigidBody.velocity.magnitude.ToString();
+        
+        if (!(
+            joystickHorizontalPlane.Direction.magnitude > 0 ||
+            joystickVerticalPlane.Direction.magnitude > 0 ||
+            Input.GetKey(KeyCode.Space) ||
+            Input.GetKey(KeyCode.LeftControl) ||
+            Input.GetKey(KeyCode.W) ||
+            Input.GetKey(KeyCode.A) ||
+            Input.GetKey(KeyCode.S) ||
+            Input.GetKey(KeyCode.D) ||
+            Input.GetKey(KeyCode.Q) ||
+            Input.GetKey(KeyCode.E) ||
+            Input.GetKey(KeyCode.LeftShift)
+        )) return;
 
         if (joystickHorizontalPlane.Direction.magnitude > 0 || joystickVerticalPlane.Direction.magnitude > 0)
         {
@@ -138,99 +155,59 @@ public class UfoController : MonoBehaviour
                     _ufoVelocityChange.y = 0;
             }
             
-            _infoText.text = _ufoRigidBody.velocity.magnitude.ToString();
             _ufoRigidBody.AddRelativeForce(_ufoVelocityChange, ForceMode.VelocityChange);
             _ufoRigidBody.AddRelativeTorque(_ufoRotationChange, ForceMode.VelocityChange);
-            SetCameraUfoDistance();
-            AlignTopCamera();
             return;
         }
 
         /******* MOVEMENT *******/
-        if (Input.GetKey(KeyCode.LeftShift))
+        if (Input.GetKey(KeyCode.LeftShift))  // Move Time.fixedDeltaTime here?
         {
-            _velocityCoefficient.x = 3;     // left / right
-            _velocityCoefficient.y = 2;     // up / down
-            _velocityCoefficient.z = 10;    // forward / backward
-            _rotationCoefficient = 2;
+            _velocityCoefficient.Set(60, 40, 300);
+            _rotationCoefficient = 30;
         }
         else
         {
-            _velocityCoefficient = Vector3.one;
-            _rotationCoefficient = 1;
+            _velocityCoefficient.Set(30, 20, 30);
+            _rotationCoefficient = 15;
         }
 
-        // TODO: Either one of these should be valid. If both are pressed, behave as none of them is pressed.
         if (Input.GetKey(KeyCode.Space))  // Accelerate depending of key pressed
-            _ufoVelocityChange.y = 20 * Time.fixedDeltaTime * _velocityCoefficient.y;
+            _ufoVelocityChange.y = Time.fixedDeltaTime * _velocityCoefficient.y;
         else if (Input.GetKey(KeyCode.LeftControl))
-            _ufoVelocityChange.y = -20 * Time.fixedDeltaTime * _velocityCoefficient.y;
-        else                              // No up/down key pressed, apply no force
+            _ufoVelocityChange.y = - Time.fixedDeltaTime * _velocityCoefficient.y;
+        if (Input.GetKey(KeyCode.Space) == Input.GetKey(KeyCode.LeftControl))  // No up/down key pressed or both are pressed, apply no force
             _ufoVelocityChange.y = 0;
-
-        // TODO: Either one of these should be valid. If both are pressed, behave as none of them is pressed.
-        if (Input.GetKey(KeyCode.W))      // Accelerate depending of key pressed
-            _ufoVelocityChange.z = 30 * Time.fixedDeltaTime * _velocityCoefficient.z;
+        
+        if (Input.GetKey(KeyCode.W))
+            _ufoVelocityChange.z = Time.fixedDeltaTime * _velocityCoefficient.z;
         else if (Input.GetKey(KeyCode.S))
-            _ufoVelocityChange.z = -30 * Time.fixedDeltaTime * _velocityCoefficient.z;
-        else                              // No forward/backward key pressed, apply no force to horizontal z
-        {
+            _ufoVelocityChange.z = - Time.fixedDeltaTime * _velocityCoefficient.z;
+        if (Input.GetKey(KeyCode.W) == Input.GetKey(KeyCode.S))
             _ufoVelocityChange.z = 0;
-            // _ufoRigidBody.velocity = Vector3.zero;
-            // _ufoRigidBody.drag = 8;
-        }
 
         if (Input.GetKey(KeyCode.Q))
-            _ufoVelocityChange.x = -20 * Time.fixedDeltaTime * _velocityCoefficient.x;
+            _ufoVelocityChange.x = - Time.fixedDeltaTime * _velocityCoefficient.x;
         else if (Input.GetKey(KeyCode.E))
-            _ufoVelocityChange.x = 20 * Time.fixedDeltaTime * _velocityCoefficient.x;
-        else
+            _ufoVelocityChange.x = Time.fixedDeltaTime * _velocityCoefficient.x;
+        if (Input.GetKey(KeyCode.Q) == Input.GetKey(KeyCode.E))
             _ufoVelocityChange.x = 0;
 
-        // Compute average Δ-time to find optimal value?
-        // if (_ufoRigidBody.velocity.magnitude > 0 && _ufoRigidBody.velocity.magnitude < .0001)
-        // {
-        //     ufoVelocityChange = Vector3.zero;
-        //     _ufoRigidBody.velocity = Vector3.zero;
-        // }
-        //
-        // if (_ufoRigidBody.velocity.magnitude > MAXSpeed)
-        // {
-        //     _ufoVelocityChange = Vector3.zero;
-        //     _ufoRigidBody.velocity = _ufoRigidBody.velocity.normalized * MAXSpeed;
-        // }
+        if (_ufoVelocityChange.magnitude > 0)
+            _ufoRigidBody.AddRelativeForce(_ufoVelocityChange, ForceMode.VelocityChange);
 
-        _infoText.text = _ufoRigidBody.velocity.magnitude.ToString();
-        _ufoRigidBody.AddRelativeForce(_ufoVelocityChange, ForceMode.VelocityChange);
-
-        // Force	        Add a continuous force to the rigidbody, using its mass.
-        // Acceleration	    Add a continuous acceleration to the rigidbody, ignoring its mass.
-        // Impulse	        Add an instant force impulse to the rigidbody, using its mass.
-        // VelocityChange	Add an instant velocity change to the rigidbody, ignoring its mass.
-        
         /******* ROTATION *******/
-        // TODO: Either one of these should be valid. If both are pressed, behave as none of them is pressed.
         if (Input.GetKey(KeyCode.A))
-        {
-            _ufoRotationChange.y = -8 * Time.fixedDeltaTime * _rotationCoefficient;
-            // _ufoRotationChange.y = -80 / (10f + _ufoRigidBody.velocity.magnitude * 3);  // there is also sqrMagnitude
-        }
+            _ufoRotationChange.y = - Time.fixedDeltaTime * _rotationCoefficient;
         else if (Input.GetKey(KeyCode.D))
-        {
-            _ufoRotationChange.y = 8 * Time.fixedDeltaTime * _rotationCoefficient;
-        }
-        else
-        {
+            _ufoRotationChange.y = Time.fixedDeltaTime * _rotationCoefficient;
+        if (Input.GetKey(KeyCode.A) == Input.GetKey(KeyCode.D))
             _ufoRotationChange.y = 0;
-            // _ufoRigidBody.angularVelocity = Vector3.zero;
-        }
 
-        _ufoRigidBody.AddRelativeTorque(_ufoRotationChange, ForceMode.VelocityChange);
-        // _ufoRigidBody.transform.Rotate(_ufoRotationChange);  // with _ufoRotationChange.y = 80 * Time.fixedDeltaTime;
+        if (_ufoRotationChange.magnitude > 0)
+            _ufoRigidBody.AddRelativeTorque(_ufoRotationChange, ForceMode.VelocityChange);
 
-        // _arrowHelper.GetComponent<MeshRenderer>().enabled = _ufoRigidBody.velocity.magnitude != 0;
         // _arrowHelper.transform.rotation = Quaternion.LookRotation(_ufoRigidBody.velocity.normalized);
-        // _arrowHelper.transform.rotation = Quaternion.LookRotation(_ufoVelocityChange.normalized);
 
         // _timeInterval += Time.fixedDeltaTime;
         // if (_timeInterval > .04f)
@@ -239,12 +216,6 @@ public class UfoController : MonoBehaviour
         //     var cubeHelper = Instantiate(_cubeHelper);
         //     cubeHelper.transform.position = _ufoRigidBody.transform.position;  // Its not a reference, because its a struct?
         // }
-
-        // AlignUfoCamera();
-
-        SetCameraUfoDistance();
-        
-        AlignTopCamera();
     }
 
     private void SetCameraUfoDistance()  // TODO: Rename
