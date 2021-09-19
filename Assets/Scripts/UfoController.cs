@@ -47,14 +47,15 @@ public class UfoController : MonoBehaviour
         _cubeHelper = GameObject.Find("CubeHelper");
         _ufoCamera = GameObject.Find("CameraUfo");
         _topCamera = GameObject.Find("CameraTop");
-        
 
         if (_ufoCamera != null)
             _initialCameraUfoLocalPosition = _ufoCamera.transform.localPosition;  // It's set in editor and it's the minimum distance
 
+        Quest.Init();
+
         // _ufoForceBeam.GetComponent<CapsuleCollider>().enabled = false;
         // _ufoForceBeam.SetActive(false);
-        
+
         // _arrowHelper.GetComponent<MeshRenderer>().enabled = false;
     }
 
@@ -132,31 +133,20 @@ public class UfoController : MonoBehaviour
 
         if (joystickHorizontalPlane.Direction.magnitude > 0 || joystickVerticalPlane.Direction.magnitude > 0)
         {
-            if (joystickHorizontalPlane.Direction.x != 0)
-                _ufoRotationChange.y = 10 * Time.fixedDeltaTime * joystickHorizontalPlane.Direction.x;
-            else
-                _ufoRotationChange.y = 0;
+            _ufoRotationChange.y = 30 * Time.fixedDeltaTime * joystickHorizontalPlane.Direction.x;
 
-            if (joystickHorizontalPlane.Direction.y != 0)
-                _ufoVelocityChange.z = 120 * Time.fixedDeltaTime * joystickHorizontalPlane.Direction.y;
-            else
-                _ufoVelocityChange.z = 0;
+            _ufoVelocityChange.z = 120 * Time.fixedDeltaTime * joystickHorizontalPlane.Direction.y;
 
-            if (joystickVerticalPlane.Direction.magnitude > 0)
-            {
-                if (joystickVerticalPlane.Direction.x != 0)
-                    _ufoVelocityChange.x = 40 * Time.fixedDeltaTime * joystickVerticalPlane.Direction.x;
-                else
-                    _ufoVelocityChange.x = 0;
+            _ufoVelocityChange.x = 40 * Time.fixedDeltaTime * joystickVerticalPlane.Direction.x;
 
-                if (joystickVerticalPlane.Direction.y != 0)
-                    _ufoVelocityChange.y = 40 * Time.fixedDeltaTime * joystickVerticalPlane.Direction.y;
-                else
-                    _ufoVelocityChange.y = 0;
-            }
+            _ufoVelocityChange.y = 40 * Time.fixedDeltaTime * joystickVerticalPlane.Direction.y;
+
+            if (_ufoVelocityChange.magnitude > 0)
+               _ufoRigidBody.AddRelativeForce(_ufoVelocityChange, ForceMode.VelocityChange);
             
-            _ufoRigidBody.AddRelativeForce(_ufoVelocityChange, ForceMode.VelocityChange);
-            _ufoRigidBody.AddRelativeTorque(_ufoRotationChange, ForceMode.VelocityChange);
+            if (_ufoRotationChange.magnitude > 0)
+                _ufoRigidBody.AddRelativeTorque(_ufoRotationChange, ForceMode.VelocityChange);
+
             return;
         }
 
