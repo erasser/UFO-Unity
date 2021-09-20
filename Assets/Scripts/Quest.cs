@@ -1,107 +1,136 @@
-﻿using Unity.VisualScripting.FullSerializer;
+﻿using System.Collections;
+using System.Timers;
+using Unity.VisualScripting.FullSerializer;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 using UnityEngine.UI;
-
-//https://stackoverflow.com/questions/29833312/static-constructor-not-working-for-structs
-//https://stackoverflow.com/questions/59938630/why-the-static-constructor-in-a-struct-gets-called-when-calling-a-non-static-met
 
 public struct Quest
 {
     // TODO: Implement sub-quests. Main quest will have its _mainQuests of own sub-quests. GetNext() will get next sub-quest; if there is none, get next main quest.
     //       add _subQuests 
     
-    private string _name;    
-    private string _description;
-    private string _accomplishedText;
-    private Vector3 _location;
+    private readonly string _name;    
+    private readonly string _description;
+    private readonly string _accomplishedText;
+    private readonly Vector3 _location;
     private bool _done;
-    private static int _active;  // index of active quest
+    private static int _activeQuestIndex;  // index of active quest
     // add type?
     // add parent GameObject?
 
+    private static Quest _active;
     private static readonly Quest[] MainQuests;
 
-    private static Text _questsText;
-    private static GameObject _targetLocationMarker;
+    private static string _questText;  // Text to be shown in UI
+    private static readonly Text QuestsText;
+    private static readonly GameObject TargetLocationMarker;
 
-
+    public static void Init()
+    {
+        /* Must be called, so the static constructor is executed. Just to fuck with me. */
+        //https://stackoverflow.com/questions/59938630/why-the-static-constructor-in-a-struct-gets-called-when-calling-a-non-static-met
+        
+        ShowActiveQuest();
+    }
 
     // dynamic constructor
-    public Quest(string name, string description, string accomplishedText, Vector3 location)
+    private Quest(string name, string description, string accomplishedText, Vector3 location)
     {
         _name = name;
         _description = description;
         _accomplishedText = accomplishedText;
         _location = location;
-        // _active = false;
+        // _activeQuestIndex = false;
         _done = false;
     }
 
     // static constructor
     static Quest()
     {
-        /* Initialize quest _mainQuests */
+        //https://stackoverflow.com/questions/59938630/why-the-static-constructor-in-a-struct-gets-called-when-calling-a-non-static-met
+        
+        /* Initialize quests */
         var quest0 = new Quest(
-            "Fly there!",
+            "Fly there! (#1)",
             "Locate and reach target destination.",
             "First destination reached!",
-            new Vector3( 500, 50, -100));
+            new Vector3( 200, 50, -100));
 
         var quest1 = new Quest(
-            "Now fly there!",
+            "Now fly there! (#2)",
             "Locate and reach this target destination.",
             "Send destination reached!",
-            new Vector3( 300, 10, -120));
+            new Vector3( 300, 40, -120));
 
         var quest2 = new Quest(
-            "And now fly there!",
+            "And now fly there! (#3)",
             "Reach and investigate target destination.",
             "Third destination reached!",
-            new Vector3( 300, 10, -120));
+            new Vector3( 250, 60, -80));
+        
+        var quest3 = new Quest(
+            "No quest",
+            "You have finished all quests. Now you can fuck off.",
+            "Fuck off.",
+            new Vector3( 0, 0, 0));
         
         MainQuests = new[] {quest0, quest1, quest2};
+
+        _active = MainQuests[0];
         
-        _questsText = GameObject.Find("questsText").GetComponent<Text>();
-        _targetLocationMarker = GameObject.Find("questTarget");
+        QuestsText = GameObject.Find("questsText").GetComponent<Text>();
+        TargetLocationMarker = GameObject.Find("questTarget");
     }
 
-    private static Quest GetFirst()
+    // private static Quest GetFirst()
+    // {
+    //     var quest = MainQuests[0];
+    //     ShowActiveQuest();
+    //     return quest;
+    // }
+
+    private static void Next()
     {
-        var quest = MainQuests[0];
+        if (_activeQuestIndex == MainQuests.Length - 1)
+            return;
+        // var quest = MainQuests[++_activeQuestIndex];
+        // ShowActiveQuest();
+        // return quest;
+        _active = MainQuests[++_activeQuestIndex];
         ShowActiveQuest();
-        return quest;
     }
 
-    private static Quest GetNext()
+    public static void Complete()
     {
-        var quest = MainQuests[++_active];
-        ShowActiveQuest();
-        return quest;
+        _active._done = true;
+        // TODO: Show _accomplishedText
+        Next();
     }
 
-    private static Quest GetActive()
-    {
-        var quest = MainQuests[_active];
-        ShowActiveQuest();
-        return quest;
-    }
+    // private static Quest GetActive()
+    // {
+    //     var quest = MainQuests[_activeQuestIndex];
+    //     ShowActiveQuest();
+    //     return quest;
+    // }
 
-    private static void ShowActiveQuest()
+    private static void ShowActiveQuest()  // https://docs.unity3d.com/Packages/com.unity.ugui@1.0/manual/StyledText.html
     {
-        var quest = MainQuests[_active];
+        var quest = MainQuests[_activeQuestIndex];
+        
         // ▶▷▸▹▻◆◈◇
-        _questsText.text = "◈ " + quest._name +
-                           "\n   " + new string('-', quest._name.Length) + "\n" +
-                           quest._description;
+        QuestsText.text = "◈ <b>" + quest._name + "</b>" +
+                     "\n   " + new string('-', quest._name.Length) + "\n" +
+                     quest._description;
 
-        _targetLocationMarker.transform.position = quest._location;
+        // ShowTextDynamically();  // TODO: Buď postupně zobrazit po znacích, nebo spíš zobrazit hned všechny znaky, ale probordelené a vybordelit z nich správný text.
+
+        TargetLocationMarker.transform.position = quest._location;
     }
 
-    public static void Init()
+    private void ShowTextDynamically()
     {
-        /* Must be called, so the static constructor is executed. Just to fuck with me. */
-        
-        GetFirst();
+        //QuestsText.text += "";
     }
-        
 }

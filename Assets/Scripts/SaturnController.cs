@@ -12,8 +12,7 @@ public class SaturnController : MonoBehaviour
 
     void Start()
     {
-        asteroidPrefab = GameObject.Find("asteroid_low_poly");
-        GenerateAsteroids(1000);
+        GenerateAsteroids(800);
         
         /*
         _asteroid = GameObject.Find("asteroid");

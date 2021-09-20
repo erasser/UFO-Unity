@@ -9,10 +9,12 @@ Android build >:-(                                              https://forum.un
 classes                                                         Class doesn't have to be imported.
                                                                 In Unity class must be inherited from MonoBehavior (contains print() and must be added as a component), ScriptableObject or nothing.
 PID controller                                                  Objects reaches a destination via physics https://answers.unity.com/questions/197225/pid-controller-simulation.html
+UFO object flickering                                           The cause is UFO Cast shadow = true with directional lighting
 
  TODO
 ══════
 ••• Neni tam náhodou stále ten defaultní Skybox (nebo jak se to jmenuje?) Ukázal se při buildu
+• Particles ring - Change Simulation space to World & swap y and z axes
 • Přiblížit vnitřní okraj prstence k Saturnu
 • UFO auto-leveling
 • Add some weapons: laser (look into assets)
@@ -28,6 +30,7 @@ PID controller                                                  Objects reaches 
 • lens flare
 • add somersault move (salto)
 • Try ASCII renderer (look into assets)
+• auto leveling - make smoothstep
 
  levels
 ════════

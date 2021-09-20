@@ -35,6 +35,8 @@ public class UfoController : MonoBehaviour
     private bool _isAutoLeveling;  // TODO: Just _autoLevelingTime or _fromTransform could be used
     private float _autoLevelingTime;
     private Quaternion _fromUfoQuaternion;
+    private GameObject _laser;
+    private Button _laserButton;
     
     void Start()
     {
@@ -47,6 +49,12 @@ public class UfoController : MonoBehaviour
         _cubeHelper = GameObject.Find("CubeHelper");
         _ufoCamera = GameObject.Find("CameraUfo");
         _topCamera = GameObject.Find("CameraTop");
+        _laser = GameObject.Find("laser");
+        _laserButton = GameObject.Find("laserButton").GetComponent<Button>();
+
+        _laser.SetActive(false);
+        _laserButton.onClick.AddListener(ToggleLaser);
+
 
         if (_ufoCamera != null)
             _initialCameraUfoLocalPosition = _ufoCamera.transform.localPosition;  // It's set in editor and it's the minimum distance
@@ -109,7 +117,7 @@ public class UfoController : MonoBehaviour
    
         MoveUfo();
         SetCameraUfoDistance();  // Do it although nothing is pressed, UFO can be moving due to inertia. Could be conditioned by velocity.magnitude.
-        AlignTopCamera();
+        // AlignTopCamera();
         // AlignUfoCamera();
     }
 
@@ -218,18 +226,18 @@ public class UfoController : MonoBehaviour
         // TODOO:  • Apply camera target.  • Invert forward/backward camera position
         
         _ufoCamera.transform.localEulerAngles = new Vector3(
-            - localVelocity.y / 2,    // pitch
-            localVelocity.x / 8,      // yaw
-            - _ufoRigidBody.angularVelocity.y * 5  // roll
+            - localVelocity.y / .4f,    // pitch
+            - localVelocity.x / .4f,      // yaw  // TODO: Rozvětvit. (-) pro zatáčení (setrvačnost), (+) rpo strafování
+            - _ufoRigidBody.angularVelocity.y * 6  // roll
             // - Mathf.Asin(_ufoRigidBody.angularVelocity.y) * 3  // can cause NaN
         );
 
-        var zCoefficient = localVelocity.z > 0 ? 6 : 18;
+        var zCoefficient = localVelocity.z < 0 ? 6 : 18;
         
         _ufoCamera.transform.localPosition = new Vector3(
             0,
             _initialCameraUfoLocalPosition.y,
-            _initialCameraUfoLocalPosition.z - localVelocity.z / zCoefficient
+            _initialCameraUfoLocalPosition.z + localVelocity.z / zCoefficient
         );
 
         /* Replaced by camera rotation
@@ -357,7 +365,7 @@ public class UfoController : MonoBehaviour
             ), phase
         );
 
-        if (phase == 1)  // I've set 1 before, so fuck fuck Rider here
+        if (phase == 1)  // I've set 1 before, so fuck Rider here
         {
             _isAutoLeveling = false;
             _autoLevelingTime = 0;
@@ -367,5 +375,10 @@ public class UfoController : MonoBehaviour
     private void OnCollisionEnter(Collision other)
     {
         InitiateAutoLeveling();
+    }
+
+    private void ToggleLaser()
+    {
+        _laser.SetActive(!_laser.activeSelf);
     }
 }

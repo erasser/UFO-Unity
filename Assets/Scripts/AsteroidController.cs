@@ -13,9 +13,9 @@ public class AsteroidController : MonoBehaviour
     // private GameObject _saturnRingParticlesParent;
 
     private const float TwoPI = 2 * Mathf.PI;
-    private const int RingsMinRadius = 200;
-    private const int RingsMaxRadius = 600;
-    private const int RingsThickness = 60;
+    private const int RingsMinRadius = 300;
+    private const int RingsMaxRadius = 700;
+    private const int RingsThickness = 40;
     private Rigidbody _rigidBody;
     private GameObject _cubeHelper;
     private static bool _testSphereHasCollided;
@@ -24,18 +24,20 @@ public class AsteroidController : MonoBehaviour
     /* Individual attributes */
     private float _angle, _distance, _x, _y, _z, _scale;
     private Quaternion _rotation;
-    public Vector3 _torque;
+    private Vector3 _torque;
     private bool _hasCollided;
+    private GameObject _particlesSaturnRing;
 
     void Start()
     {
         _rigidBody = GetComponent<Rigidbody>();
+        _particlesSaturnRing = GameObject.Find("ParticleSaturnRing");
         // _saturnRingParticlesParent = GameObject.Find("SaturnRingParticlesParent1");
     }
 
     private void Update()
     {
-        // _saturnRingParticlesParent.transform.Rotate(new Vector3(0, 0, -.0004f * Time.deltaTime));
+        _particlesSaturnRing.transform.Rotate(new Vector3(0, 0, .0003f * Time.deltaTime));
     }
 
     void FixedUpdate()
@@ -73,8 +75,8 @@ public class AsteroidController : MonoBehaviour
 
         //           max  * /                   range <0;1>                      \  min size
         // var scale = 2 * (outerRadius - innerRadius) / (distance - innerRadius) + .1f;  // more distant => bigger asteroid
-        // _scale = Random.Range(.8f, 10);
-        _scale = Random.Range(.8f, 20);
+        // _scale = Random.Range(.8f, 20);  // for low poly asteroid
+        _scale = Random.Range(.05f, .3f);
 
 
         transform.SetPositionAndRotation(new Vector3(_x, _y, _z), _rotation);
@@ -83,9 +85,9 @@ public class AsteroidController : MonoBehaviour
         transform.localScale = new Vector3(_scale, _scale, _scale);
 
         // GetComponent<Rigidbody>().mass = Mathf.Pow(_scale, 3) * 100;
-        GetComponent<Rigidbody>().mass = _scale * 100;
+        GetComponent<Rigidbody>().mass = _scale * 300;
 
-        _torque = new Vector3(Random.value * 3, Random.value * 3, Random.value * 3);
+        _torque = new Vector3(Random.Range(-3, 3), Random.Range(-3, 3), Random.Range(-3, 3));
         if (_torque.magnitude > 2)  // Optimization: Do not apply, if torque would be too small
             GetComponent<Rigidbody>().AddRelativeTorque(_torque, ForceMode.Acceleration);
 
@@ -117,7 +119,7 @@ public class AsteroidController : MonoBehaviour
 if (_distance == 0) return;
         // closer to the planet => faster motion
         // _angle -= RingsMaxRadius / _distance * Time.fixedDeltaTime / 100;
-        _angle -= Mathf.Pow(RingsMaxRadius / _distance, 3) * Time.fixedDeltaTime / 400;
+        _angle -= Mathf.Pow(RingsMaxRadius / _distance, 3) * Time.fixedDeltaTime / 200;
 
         _x = Mathf.Cos(_angle) * _distance;
         _z = Mathf.Sin(_angle) * _distance;
