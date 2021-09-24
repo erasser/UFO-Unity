@@ -15,7 +15,7 @@ public class AsteroidController : MonoBehaviour
     private const float TwoPI = 2 * Mathf.PI;
     private const int RingsMinRadius = 300;
     private const int RingsMaxRadius = 700;
-    private const int RingsThickness = 40;
+    private const int RingsThickness = 30;
     private Rigidbody _rigidBody;
     private GameObject _cubeHelper;
     private static bool _testSphereHasCollided;
@@ -27,17 +27,21 @@ public class AsteroidController : MonoBehaviour
     private Vector3 _torque;
     private bool _hasCollided;
     private GameObject _particlesSaturnRing;
+    private GameObject _particlesSaturnRingIce;
+    private GameObject _selectionSprite;
 
     void Start()
     {
         _rigidBody = GetComponent<Rigidbody>();
         _particlesSaturnRing = GameObject.Find("ParticleSaturnRing");
-        // _saturnRingParticlesParent = GameObject.Find("SaturnRingParticlesParent1");
+        _particlesSaturnRingIce = GameObject.Find("ParticleSaturnRingIce");
+        _selectionSprite = GameObject.Find("selectionSprite");
     }
 
     private void Update()
     {
         _particlesSaturnRing.transform.Rotate(new Vector3(0, 0, .0003f * Time.deltaTime));
+        _particlesSaturnRingIce.transform.Rotate(new Vector3(0, 0, .0002f * Time.deltaTime));
     }
 
     void FixedUpdate()
@@ -114,6 +118,7 @@ public class AsteroidController : MonoBehaviour
         // if (_frames++ % 2 != 0) return;  // Or Project settings -> Time -> Fixed timestep (default = .02 ms)
 
         // TODO: Asteroids stops moving when collided by UFO. Solve it.
+        // TODO: Optimization: Distant asteroids doesn't need to be rotated 
 
         if (_hasCollided || name == "asteroid") return;  // TODO: Get rid of 'asteroid' (I already have a prefab, just delete the main asteroid from scene, or set it as inactive)
 if (_distance == 0) return;
@@ -137,4 +142,10 @@ if (_distance == 0) return;
         // _testSphereHasCollided = true;
     }
 
+    private void OnMouseUpAsButton()
+    {
+        // Sometimes refuse to select. Has to be assigned to all selectable objects.  TODO: Choose another approach.
+        // _selectionSprite.transform.SetParent(transform);
+        // _selectionSprite.transform.localPosition = Vector3.zero;
+    }
 }

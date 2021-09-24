@@ -1,4 +1,5 @@
 using System;
+using Unity.VisualScripting;
 // using System.Collections;
 // using System.Collections.Generic;
 // using Unity.VisualScripting;
@@ -31,13 +32,18 @@ public class UfoController : MonoBehaviour
     private static Text _infoText;         // UI element
     private Vector3 _velocityCoefficient;
     private int _rotationCoefficient;
-    private const int AutoLevelingDuration = 2;  // seconds
-    private bool _isAutoLeveling;  // TODO: Just _autoLevelingTime or _fromTransform could be used
+    public bool _isAutoLeveling;  // TODO: Just _autoLevelingTime or _fromTransform could be used
     private float _autoLevelingTime;
     private Quaternion _fromUfoQuaternion;
     private GameObject _laser;
     private Button _laserButton;
-    
+    private GameObject _selectionSprite;
+    private GameObject _selectedObject;
+    private GameObject _jet;
+    private RaycastHit _selectionHit;
+    private GameObject _laserLight;
+    private GameObject _selectedObjectCamera;
+
     void Start()
     {
         // _ufo = GameObject.Find("UFO_low_poly");      // TODO: This is this! :D  // Odstranit _ufo z této třídy, zbytečné
@@ -51,10 +57,14 @@ public class UfoController : MonoBehaviour
         _topCamera = GameObject.Find("CameraTop");
         _laser = GameObject.Find("laser");
         _laserButton = GameObject.Find("laserButton").GetComponent<Button>();
+        _selectionSprite = GameObject.Find("selectionSprite");
+        _jet = GameObject.Find("jet");
+        _laserLight = GameObject.Find("laserLight");
+        _selectedObjectCamera = GameObject.Find("CameraSelectedObject");
 
         _laser.SetActive(false);
+        _laserLight.SetActive(false);
         _laserButton.onClick.AddListener(ToggleLaser);
-
 
         if (_ufoCamera != null)
             _initialCameraUfoLocalPosition = _ufoCamera.transform.localPosition;  // It's set in editor and it's the minimum distance
@@ -82,6 +92,11 @@ public class UfoController : MonoBehaviour
                 _ufoRigidBody.drag = drag;
         }
 
+        if (Input.GetKey(KeyCode.T)) // TODO: Remove
+        {
+            _ufoRigidBody.rotation = Quaternion.Euler(45, 0, 80);
+        }
+
         if (Input.GetKey(KeyCode.R))  // auto level
         {
             InitiateAutoLeveling();
@@ -97,6 +112,10 @@ public class UfoController : MonoBehaviour
             ), ForceMode.VelocityChange);*/ // TODO: Try replacing with RotateLocal to remove inertia
         }
 
+        SelectObject();  // Test key & set selected object
+
+        UpdateSelection();  // Update
+
         // if (Input.GetKeyDown(KeyCode.F))  // switch force field
         // {
         //     _forceBeamEnabled = !_forceBeamEnabled;
@@ -104,6 +123,7 @@ public class UfoController : MonoBehaviour
         //
         //     _ufoCamera.transform.Rotate(_forceBeamEnabled ? new Vector3(10, 0, 0) : new Vector3(-10, 0, 0));
         // }
+
     }
     
     void FixedUpdate()
@@ -119,10 +139,16 @@ public class UfoController : MonoBehaviour
         SetCameraUfoDistance();  // Do it although nothing is pressed, UFO can be moving due to inertia. Could be conditioned by velocity.magnitude.
         // AlignTopCamera();
         // AlignUfoCamera();
+        
+        UpdateSelection();
+        
+        _jet.transform.Translate(Vector3.forward / 20);
+        Debug.DrawRay(_jet.transform.position, _jet.transform.TransformDirection (Vector3.forward) * 20, Color.magenta);
+
     }
 
     private void MoveUfo()
-    {
+    {//autoLevelingDuration = _ufo.transform.eulerAngles.magnitude;
         // _infoText.text = _ufoRigidBody.velocity.magnitude.ToString();
         
         if (!(
@@ -149,13 +175,7 @@ public class UfoController : MonoBehaviour
 
             _ufoVelocityChange.y = 40 * Time.fixedDeltaTime * joystickVerticalPlane.Direction.y;
 
-            if (_ufoVelocityChange.magnitude > 0)
-               _ufoRigidBody.AddRelativeForce(_ufoVelocityChange, ForceMode.VelocityChange);
-            
-            if (_ufoRotationChange.magnitude > 0)
-                _ufoRigidBody.AddRelativeTorque(_ufoRotationChange, ForceMode.VelocityChange);
-
-            return;
+            goto DoTransform;
         }
 
         /******* MOVEMENT *******/
@@ -202,6 +222,11 @@ public class UfoController : MonoBehaviour
         if (Input.GetKey(KeyCode.A) == Input.GetKey(KeyCode.D))
             _ufoRotationChange.y = 0;
 
+        DoTransform:
+        
+        if (_ufoVelocityChange.magnitude > 0)
+            _ufoRigidBody.AddRelativeForce(_ufoVelocityChange, ForceMode.VelocityChange);
+            
         if (_ufoRotationChange.magnitude > 0)
             _ufoRigidBody.AddRelativeTorque(_ufoRotationChange, ForceMode.VelocityChange);
 
@@ -301,6 +326,7 @@ public class UfoController : MonoBehaviour
     {
         if (!_topCamera) return;
 
+        // Stačilo by dát jí jako child k UFO, ne?
         _topCamera.transform.position = new Vector3(_ufo.transform.position.x, _ufo.transform.position.y + 16, _ufo.transform.position.z);
         _topCamera.transform.eulerAngles = new Vector3(90, _ufo.transform.eulerAngles.y, 0);
         
@@ -340,18 +366,56 @@ public class UfoController : MonoBehaviour
             return;
             
         _isAutoLeveling = true;
+    }
+
+    private void UpdateAutoLeveling()  // TODO:
+    {
+        var torqueForce = transform.eulerAngles;
+        // torqueForce.y = 0;
+
+        // if (torqueForce.magnitude < .01f)
+        //     _isAutoLeveling = false;
+
+        // _ufoRigidBody.AddTorque(-1 * transform.TransformDirection(torqueForce), ForceMode.Impulse);
+
+        var lerpAngle = new Vector3(
+            Mathf.LerpAngle(torqueForce.x, 0, .5f),
+            0,
+            Mathf.LerpAngle(torqueForce.z, 0, .5f));
+        
+        _ufoRigidBody.AddTorque(transform.TransformDirection(lerpAngle), ForceMode.Impulse);
+        
+        if (lerpAngle.magnitude < .1f)
+            _isAutoLeveling = false;
+
+        
+        // Mathf.LerpAngle, Mathf.DeltaAngle
+    }
+
+
+    private void InitiateAutoLeveling_old()
+    {
+        if (_isAutoLeveling)
+            return;
+            
+        _isAutoLeveling = true;
         _fromUfoQuaternion = _ufoRigidBody.transform.rotation;  // .transform is a reference, while Quaternion is a struct
         _autoLevelingTime = 0;
     }
     
-    private void UpdateAutoLeveling()
+    private void UpdateAutoLeveling_old()
     {
         // TODO: What if it will collide while auto leveling?
+
+        // autoLevelingDuration = _ufoRigidBody.transform.eulerAngles.magnitude;
+
+        var autoLevelingDuration = 5;
+        
         _autoLevelingTime += Time.fixedDeltaTime;
 
         float phase;
-        if (_autoLevelingTime < AutoLevelingDuration)
-            phase = _autoLevelingTime / AutoLevelingDuration;            
+        if (_autoLevelingTime < autoLevelingDuration)
+            phase = _autoLevelingTime / autoLevelingDuration;            
         else
             phase = 1;
         
@@ -374,11 +438,56 @@ public class UfoController : MonoBehaviour
 
     private void OnCollisionEnter(Collision other)
     {
-        InitiateAutoLeveling();
+        // InitiateAutoLeveling();
     }
 
     private void ToggleLaser()
     {
         _laser.SetActive(!_laser.activeSelf);
+        _laserLight.SetActive(_laser.activeSelf);
+    }
+
+    private void SelectObject()
+    {
+        // TODO: Add selected object info
+        // TODO: Use layers to avoid touching UI https://answers.unity.com/questions/132586/game-object-as-touch-trigger.html
+        if (Input.GetMouseButtonDown(0) || Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
+        {
+            if (Physics.Raycast(_ufoCamera.GetComponent<Camera>().ScreenPointToRay(Input.mousePosition), out _selectionHit))
+            {
+                if (!_selectionHit.collider.CompareTag("UFO")) // TODO: Use layerMask parameter, when number of ignored objects grows. https://docs.unity3d.com/Manual/Layers.html
+                {
+                    _selectedObject = _selectionHit.collider.gameObject;
+
+                    _selectionSprite.SetActive(true);
+                    _selectionSprite.transform.SetParent(_selectedObject.transform);
+                    _selectionSprite.transform.localPosition = Vector3.zero;
+
+                    _selectedObjectCamera.transform.SetParent(_selectedObject.transform);
+                }
+                else
+                    SelectNone();
+            }
+            else
+                SelectNone();
+        }
+    }
+
+    private void UpdateSelection()
+    {
+        if (!_selectedObject) return;
+
+        _selectionSprite.transform.LookAt(_ufoCamera.transform);
+
+        // _selectedObjectCamera.transform.localPosition = new Vector3(0, 20, -100);
+        _selectedObjectCamera.transform.localPosition = new Vector3(0, 0, -100);
+        _selectedObjectCamera.transform.position = new Vector3(_selectedObjectCamera.transform.position.x, _selectedObject.transform.position.y + 6, _selectedObjectCamera.transform.position.z);
+        _selectedObjectCamera.transform.LookAt(_selectedObject.transform, Vector3.up);
+    }
+
+    private void SelectNone()
+    {
+        _selectedObject = null;
+        _selectionSprite.SetActive(false);
     }
 }

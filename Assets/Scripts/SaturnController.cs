@@ -12,7 +12,7 @@ public class SaturnController : MonoBehaviour
 
     void Start()
     {
-        GenerateAsteroids(800);
+        GenerateAsteroids(700);
         
         /*
         _asteroid = GameObject.Find("asteroid");

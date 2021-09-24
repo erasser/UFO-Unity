@@ -1,4 +1,4 @@
-﻿GIT token                                                       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
+﻿GIT token                                                       ► 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 ◄
 
  issue                                                           solution
 ═══════                                                         ══════════
@@ -8,34 +8,48 @@ swapped y and z on UFO model (-90° x rotation)                  Solved by rotat
 Android build >:-(                                              https://forum.unity.com/threads/android-ndk-not-found.1111555
 classes                                                         Class doesn't have to be imported.
                                                                 In Unity class must be inherited from MonoBehavior (contains print() and must be added as a component), ScriptableObject or nothing.
+struct                                                          Instance is a value (instance of class is a reference). Cannot be inherited from.
 PID controller                                                  Objects reaches a destination via physics https://answers.unity.com/questions/197225/pid-controller-simulation.html
 UFO object flickering                                           The cause is UFO Cast shadow = true with directional lighting
+disabled sprites texture input                                  Choose texture with other shader, then switch to Sprites shader 🤷
+object jitters when moving                                      Transform it in FixedUpdate()
 
  TODO
 ══════
+• USE 'MOBILE' SHADERS!
+• ZKUSIT ASTEROIDY I S FYZIKOU POMOCÍ PARTICLES!
 ••• Neni tam náhodou stále ten defaultní Skybox (nebo jak se to jmenuje?) Ukázal se při buildu
 • Particles ring - Change Simulation space to World & swap y and z axes
 • Přiblížit vnitřní okraj prstence k Saturnu
-• UFO auto-leveling
+• UFO auto-levelin
 • Add some weapons: laser (look into assets)
 • Add attachable probes with cameras
 • Try to add Saturn shadow: https://en.wikipedia.org/wiki/Saturn#/media/File:Saturn_from_Cassini_Orbiter_(2007-01-19).jpg
-• close camera when going backwards
 • Add rearview mirror https://docs.unity3d.com/Manual/class-RenderTexture.html
 • Add environment info (temperature, pressure, radiation, magnetism (planets magnetosphere)...)
 • Check this diffuse shake: https://pastebin.com/wT1Gihry
-• Implement cool brutal zooming
+• Implement cool brutal zooming (e.g. to molecule level)
 • Universe map
 • Editor of UFO saucers
 • lens flare
 • add somersault move (salto)
 • Try ASCII renderer (look into assets)
 • auto leveling - make smoothstep
+• Optimize for mobile:  https://answers.unity.com/questions/1737558/very-bad-performance-on-android.html
+   (interesting demo)   https://blog.unity.com/technology/achieve-beautiful-scalable-and-performant-graphics-with-the-universal-render-pipeline
+• UFO cockpit & control panel
+• UI - percentual width?
+
+» průlet hvězdama
+» přidat něco jako bombu, buď vystřelenou, nebo přidělanou k asteroidu => pěkný efekt, jak to rozhodí asteroidy
+» vyřešit kolizi asteroidů při jejich generování, zkusit nějakej raycast?
+» Potřebuju boundingBox či BoundingSphere kvůli SelectObject selection spritu (velikost) a selection kameře (vzdálenost)
 
  levels
 ════════
 • simulator (tutorial)
 • Area 51 (escape? attack? stealth?)
+• underwater
 
  physics
 ═════════
