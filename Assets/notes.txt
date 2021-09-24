@@ -21,7 +21,7 @@ object jitters when moving                                      Transform it in 
 ••• Neni tam náhodou stále ten defaultní Skybox (nebo jak se to jmenuje?) Ukázal se při buildu
 • Particles ring - Change Simulation space to World & swap y and z axes
 • Přiblížit vnitřní okraj prstence k Saturnu
-• UFO auto-levelin
+• UFO auto-leveling
 • Add some weapons: laser (look into assets)
 • Add attachable probes with cameras
 • Try to add Saturn shadow: https://en.wikipedia.org/wiki/Saturn#/media/File:Saturn_from_Cassini_Orbiter_(2007-01-19).jpg
@@ -37,6 +37,7 @@ object jitters when moving                                      Transform it in 
 • auto leveling - make smoothstep
 • Optimize for mobile:  https://answers.unity.com/questions/1737558/very-bad-performance-on-android.html
    (interesting demo)   https://blog.unity.com/technology/achieve-beautiful-scalable-and-performant-graphics-with-the-universal-render-pipeline
+   Try to render just some asteroids using LayerMask
 • UFO cockpit & control panel
 • UI - percentual width?
 

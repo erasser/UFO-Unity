@@ -39,6 +39,7 @@ public class UfoController : MonoBehaviour
     private Button _laserButton;
     private GameObject _selectionSprite;
     private GameObject _selectedObject;
+    private float _selectedObjectRadius;
     private GameObject _jet;
     private RaycastHit _selectionHit;
     private GameObject _laserLight;
@@ -142,8 +143,8 @@ public class UfoController : MonoBehaviour
         
         UpdateSelection();
         
-        _jet.transform.Translate(Vector3.forward / 20);
-        Debug.DrawRay(_jet.transform.position, _jet.transform.TransformDirection (Vector3.forward) * 20, Color.magenta);
+        // _jet.transform.Translate(Vector3.forward / 20);
+        // Debug.DrawRay(_jet.transform.position, _jet.transform.TransformDirection (Vector3.forward) * 20, Color.magenta);
 
     }
 
@@ -447,7 +448,7 @@ public class UfoController : MonoBehaviour
         _laserLight.SetActive(_laser.activeSelf);
     }
 
-    private void SelectObject()
+    private void SelectObject()  // Set clicked object as selected
     {
         // TODO: Add selected object info
         // TODO: Use layers to avoid touching UI https://answers.unity.com/questions/132586/game-object-as-touch-trigger.html
@@ -455,7 +456,9 @@ public class UfoController : MonoBehaviour
         {
             if (Physics.Raycast(_ufoCamera.GetComponent<Camera>().ScreenPointToRay(Input.mousePosition), out _selectionHit))
             {
-                if (!_selectionHit.collider.CompareTag("UFO")) // TODO: Use layerMask parameter, when number of ignored objects grows. https://docs.unity3d.com/Manual/Layers.html
+                print(_selectionHit.collider.name);
+                // TODO: Use layerMask parameter, when number of ignored objects grows. https://docs.unity3d.com/Manual/Layers.html
+                if (_selectedObject != _selectionHit.collider.gameObject && !_selectionHit.collider.CompareTag("UFO"))
                 {
                     _selectedObject = _selectionHit.collider.gameObject;
 
@@ -463,7 +466,18 @@ public class UfoController : MonoBehaviour
                     _selectionSprite.transform.SetParent(_selectedObject.transform);
                     _selectionSprite.transform.localPosition = Vector3.zero;
 
-                    _selectedObjectCamera.transform.SetParent(_selectedObject.transform);
+                    _selectedObjectCamera.SetActive(true);
+
+                    var addedCollider = false;
+                    if (!_selectedObject.GetComponent<SphereCollider>())
+                    {
+                        _selectedObject.AddComponent<SphereCollider>();
+                        addedCollider = true;
+                    }
+                    _selectedObjectRadius = _selectedObject.GetComponent<SphereCollider>().radius * _selectedObject.transform.lossyScale.x;
+
+                    if (addedCollider)
+                        Destroy(_selectedObject.GetComponent<SphereCollider>());
                 }
                 else
                     SelectNone();
@@ -473,15 +487,17 @@ public class UfoController : MonoBehaviour
         }
     }
 
-    private void UpdateSelection()
+    private void UpdateSelection()  // Updates selection camera & selection sprite in realtime
     {
         if (!_selectedObject) return;
 
         _selectionSprite.transform.LookAt(_ufoCamera.transform);
 
-        // _selectedObjectCamera.transform.localPosition = new Vector3(0, 20, -100);
-        _selectedObjectCamera.transform.localPosition = new Vector3(0, 0, -100);
-        _selectedObjectCamera.transform.position = new Vector3(_selectedObjectCamera.transform.position.x, _selectedObject.transform.position.y + 6, _selectedObjectCamera.transform.position.z);
+        _selectedObjectCamera.transform.position = _selectedObject.transform.position + new Vector3(
+            Mathf.Cos(Time.time / 4) * _selectedObjectRadius * 2,
+            _selectedObjectRadius * 1.1f,
+            Mathf.Sin(Time.time / 4) * _selectedObjectRadius * 2);
+
         _selectedObjectCamera.transform.LookAt(_selectedObject.transform, Vector3.up);
     }
 
@@ -489,5 +505,6 @@ public class UfoController : MonoBehaviour
     {
         _selectedObject = null;
         _selectionSprite.SetActive(false);
+        _selectedObjectCamera.SetActive(false);
     }
 }
