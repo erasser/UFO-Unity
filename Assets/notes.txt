@@ -41,10 +41,13 @@ object jitters when moving                                      Transform it in 
 • UFO cockpit & control panel
 • UI - percentual width?
 
+► ťuk do 666kg UFO 88kg asteroid ani nehnul
+» cinematic camera
+» always visible selection sprite (try depth test=false)
+» zkus vyrenderovat texturu na neplacatý objekt
 » průlet hvězdama
 » přidat něco jako bombu, buď vystřelenou, nebo přidělanou k asteroidu => pěkný efekt, jak to rozhodí asteroidy
 » vyřešit kolizi asteroidů při jejich generování, zkusit nějakej raycast?
-» Potřebuju boundingBox či BoundingSphere kvůli SelectObject selection spritu (velikost) a selection kameře (vzdálenost)
 
  levels
 ════════

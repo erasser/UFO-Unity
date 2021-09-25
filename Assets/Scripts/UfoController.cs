@@ -456,15 +456,10 @@ public class UfoController : MonoBehaviour
         {
             if (Physics.Raycast(_ufoCamera.GetComponent<Camera>().ScreenPointToRay(Input.mousePosition), out _selectionHit))
             {
-                print(_selectionHit.collider.name);
                 // TODO: Use layerMask parameter, when number of ignored objects grows. https://docs.unity3d.com/Manual/Layers.html
                 if (_selectedObject != _selectionHit.collider.gameObject && !_selectionHit.collider.CompareTag("UFO"))
                 {
                     _selectedObject = _selectionHit.collider.gameObject;
-
-                    _selectionSprite.SetActive(true);
-                    _selectionSprite.transform.SetParent(_selectedObject.transform);
-                    _selectionSprite.transform.localPosition = Vector3.zero;
 
                     _selectedObjectCamera.SetActive(true);
 
@@ -474,10 +469,18 @@ public class UfoController : MonoBehaviour
                         _selectedObject.AddComponent<SphereCollider>();
                         addedCollider = true;
                     }
-                    _selectedObjectRadius = _selectedObject.GetComponent<SphereCollider>().radius * _selectedObject.transform.lossyScale.x;
+                    _selectedObjectRadius = _selectedObject.GetComponent<SphereCollider>().radius;
 
                     if (addedCollider)
                         Destroy(_selectedObject.GetComponent<SphereCollider>());
+
+                    _selectionSprite.SetActive(true);
+                    _selectionSprite.transform.SetParent(_selectedObject.transform);
+                    _selectionSprite.transform.localPosition = Vector3.zero;
+                    var scale = _selectedObjectRadius * 3;  // uff
+                    _selectionSprite.transform.localScale = new Vector3(scale, scale, scale);
+
+                    _selectedObjectRadius *= _selectedObject.transform.lossyScale.x;
                 }
                 else
                     SelectNone();
