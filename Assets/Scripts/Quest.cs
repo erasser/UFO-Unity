@@ -75,10 +75,10 @@ public struct Quest
             "Fuck off.",
             new Vector3( 0, 0, 0));
         
-        MainQuests = new[] {quest0, quest1, quest2};
+        MainQuests = new[] {quest0, quest1, quest2, quest3};
 
         _active = MainQuests[0];
-        
+
         QuestsText = GameObject.Find("questsText").GetComponent<Text>();
         TargetLocationMarker = GameObject.Find("questTarget");
     }

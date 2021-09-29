@@ -37,7 +37,7 @@ object jitters when moving                                      Transform it in 
 • auto leveling - make smoothstep
 • Optimize for mobile:  https://answers.unity.com/questions/1737558/very-bad-performance-on-android.html
    (interesting demo)   https://blog.unity.com/technology/achieve-beautiful-scalable-and-performant-graphics-with-the-universal-render-pipeline
-   Try to render just some asteroids using LayerMask
+   Selection camera - Try to render just some asteroids using LayerMask (or render just the selected object, in worst case don't update the camera)
 • UFO cockpit & control panel
 • UI - percentual width?
 

@@ -6,6 +6,7 @@ using Unity.VisualScripting;
 // using UnityEngine.Rendering;
 using UnityEngine;
 using UnityEngine.Android;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 // TODO:  Limit speed by applying magnitude of velocity vector, so speed of particular axes are not independent and so UFO has its 'total' max speed limit
@@ -22,7 +23,7 @@ public class UfoController : MonoBehaviour
     private static Rigidbody _ufoRigidBody;
     private static Vector3 _ufoVelocityChange;  // Add an instant velocity change to the rigidbody (ignoring its mass)
     private static Vector3 _ufoRotationChange;
-    private static GameObject _arrowHelper;
+    private static GameObject _arrow;
     private static GameObject _cubeHelper;
     private GameObject _ufoCamera;
     private Vector3 _initialCameraUfoLocalPosition;
@@ -44,15 +45,20 @@ public class UfoController : MonoBehaviour
     private RaycastHit _selectionHit;
     private GameObject _laserLight;
     private GameObject _selectedObjectCamera;
+    private GameObject _selectedObjectCameraTexture;  // UI element
+    private GameObject _3dGrid;
+    private GameObject _questTarget;
 
     void Start()
     {
+        Application.targetFrameRate = 666;
+
         // _ufo = GameObject.Find("UFO_low_poly");      // TODO: This is this! :D  // Odstranit _ufo z této třídy, zbytečné
         _ufoRigidBody = GetComponent<Rigidbody>();
         // _ufoLights = GameObject.Find("UfoLights");
         _ufoForceBeam = GameObject.Find("ForceBeam");
         _infoText = GameObject.Find("InfoText").GetComponent<Text>();
-        _arrowHelper = GameObject.Find("arrow");
+        _arrow = GameObject.Find("arrow");
         _cubeHelper = GameObject.Find("CubeHelper");
         _ufoCamera = GameObject.Find("CameraUfo");
         _topCamera = GameObject.Find("CameraTop");
@@ -62,14 +68,28 @@ public class UfoController : MonoBehaviour
         _jet = GameObject.Find("jet");
         _laserLight = GameObject.Find("laserLight");
         _selectedObjectCamera = GameObject.Find("CameraSelectedObject");
+        _selectedObjectCameraTexture = GameObject.Find("SelectedObjectCameraTexture");
+        _3dGrid = GameObject.Find("3d_grid_planes");
+        _questTarget = GameObject.Find("questTarget");
 
         _laser.SetActive(false);
         _laserLight.SetActive(false);
+        _selectedObjectCamera.SetActive(false);
+        _selectedObjectCameraTexture.SetActive(false);
+        _selectionSprite.SetActive(false);
         _laserButton.onClick.AddListener(ToggleLaser);
 
         if (_ufoCamera != null)
-            _initialCameraUfoLocalPosition = _ufoCamera.transform.localPosition;  // It's set in editor and it's the minimum distance
+            _initialCameraUfoLocalPosition = _ufoCamera.transform.localPosition;  // It's set in editor
 
+        foreach (Transform child in GameObject.Find("buildings").transform)
+        {
+            child.gameObject.AddComponent<Rigidbody>();
+            var rb = child.gameObject.GetComponent<Rigidbody>();
+            rb.isKinematic = true;
+            child.gameObject.AddComponent<BoxCollider>();
+        }
+        
         Quest.Init();
 
         // _ufoForceBeam.GetComponent<CapsuleCollider>().enabled = false;
@@ -117,6 +137,8 @@ public class UfoController : MonoBehaviour
 
         UpdateSelection();  // Update
 
+        Update3dGrid();
+
         // if (Input.GetKeyDown(KeyCode.F))  // switch force field
         // {
         //     _forceBeamEnabled = !_forceBeamEnabled;
@@ -143,9 +165,10 @@ public class UfoController : MonoBehaviour
         
         UpdateSelection();
         
-        // _jet.transform.Translate(Vector3.forward / 20);
+        UpdateArrow();
+        
+        _jet.transform.Translate(Vector3.forward / 16);
         // Debug.DrawRay(_jet.transform.position, _jet.transform.TransformDirection (Vector3.forward) * 20, Color.magenta);
-
     }
 
     private void MoveUfo()
@@ -328,8 +351,8 @@ public class UfoController : MonoBehaviour
         if (!_topCamera) return;
 
         // Stačilo by dát jí jako child k UFO, ne?
-        _topCamera.transform.position = new Vector3(_ufo.transform.position.x, _ufo.transform.position.y + 16, _ufo.transform.position.z);
-        _topCamera.transform.eulerAngles = new Vector3(90, _ufo.transform.eulerAngles.y, 0);
+        _topCamera.transform.position = new Vector3(transform.position.x, transform.position.y + 16, transform.position.z);
+        _topCamera.transform.eulerAngles = new Vector3(90, transform.eulerAngles.y, 0);
         
         // UpdateVectorComponent(ref _topCamera.transform.position, "y", 16);  // Hm, takže nic :D
     }
@@ -445,14 +468,14 @@ public class UfoController : MonoBehaviour
     private void ToggleLaser()
     {
         _laser.SetActive(!_laser.activeSelf);
-        _laserLight.SetActive(_laser.activeSelf);
+        // _laserLight.SetActive(_laser.activeSelf);  // Significant performance drop!
     }
 
     private void SelectObject()  // Set clicked object as selected
     {
         // TODO: Add selected object info
         // TODO: Use layers to avoid touching UI https://answers.unity.com/questions/132586/game-object-as-touch-trigger.html
-        if (Input.GetMouseButtonDown(0) || Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
+        if (!EventSystem.current.IsPointerOverGameObject() && (Input.GetMouseButtonDown(0) || Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began))
         {
             if (Physics.Raycast(_ufoCamera.GetComponent<Camera>().ScreenPointToRay(Input.mousePosition), out _selectionHit))
             {
@@ -462,6 +485,7 @@ public class UfoController : MonoBehaviour
                     _selectedObject = _selectionHit.collider.gameObject;
 
                     _selectedObjectCamera.SetActive(true);
+                    _selectedObjectCameraTexture.SetActive(true);
 
                     var addedCollider = false;
                     if (!_selectedObject.GetComponent<SphereCollider>())
@@ -477,8 +501,8 @@ public class UfoController : MonoBehaviour
                     _selectionSprite.SetActive(true);
                     _selectionSprite.transform.SetParent(_selectedObject.transform);
                     _selectionSprite.transform.localPosition = Vector3.zero;
-                    var scale = _selectedObjectRadius * 3;  // uff
-                    _selectionSprite.transform.localScale = new Vector3(scale, scale, scale);
+                    var scale = _selectedObjectRadius * 3;
+                    _selectionSprite.transform.localScale = new Vector3(scale, scale, scale);  // uff
 
                     _selectedObjectRadius *= _selectedObject.transform.lossyScale.x;
                 }
@@ -509,5 +533,21 @@ public class UfoController : MonoBehaviour
         _selectedObject = null;
         _selectionSprite.SetActive(false);
         _selectedObjectCamera.SetActive(false);
+        _selectedObjectCameraTexture.SetActive(false);
+    }
+
+    private void Update3dGrid()
+    {
+        // _3dGrid.transform.rotation = Quaternion.LookRotation(_ufoRigidBody.transform.eulerAngles);
+        // _3dGrid.transform.rotation = transform.rotation;
+        _3dGrid.transform.localEulerAngles = new Vector3(
+            transform.localEulerAngles.x,
+            -transform.localEulerAngles.y,
+            transform.localEulerAngles.z);
+    }
+
+    private void UpdateArrow()
+    {
+        _arrow.transform.LookAt(_questTarget.transform);
     }
 }
