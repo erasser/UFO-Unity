@@ -1,10 +1,11 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class QuestTargetController : MonoBehaviour
+public class QuestTarget : MonoBehaviour
 {
+    // public int questIndex;  // index from Quest.MainQuests array
+    
     void Update()
     {
         transform.Rotate (- Time.deltaTime * 20 * Vector3.up, Space.World);
@@ -18,4 +19,9 @@ public class QuestTargetController : MonoBehaviour
             Quest.Complete();
         }
     }
+
+    // public int Get()
+    // {
+    //     return questIndex;
+    // }
 }

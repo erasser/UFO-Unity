@@ -38,6 +38,7 @@ object jitters when moving                                      Transform it in 
 • Optimize for mobile:  https://answers.unity.com/questions/1737558/very-bad-performance-on-android.html
    (interesting demo)   https://blog.unity.com/technology/achieve-beautiful-scalable-and-performant-graphics-with-the-universal-render-pipeline
    Selection camera - Try to render just some asteroids using LayerMask (or render just the selected object, in worst case don't update the camera)
+   https://thegamedev.guru/unity-performance/checklist/
 • UFO cockpit & control panel
 • UI - percentual width?
 

@@ -11,6 +11,7 @@ using UnityEngine.UI;
 
 // TODO:  Limit speed by applying magnitude of velocity vector, so speed of particular axes are not independent and so UFO has its 'total' max speed limit
 // TODO:  Try to apply <TrailRenderer>
+// TODO:  Make static, what can be made static
 
 public class UfoController : MonoBehaviour
 {
@@ -46,6 +47,8 @@ public class UfoController : MonoBehaviour
     private GameObject _laserLight;
     private GameObject _selectedObjectCamera;
     private GameObject _selectedObjectCameraTexture;  // UI element
+    private Text _selectedObjectCameraText;           // UI element
+    private bool _selectedObjectMustCenterPivot;      // Buildings have pivot at bottom => pivot must be centered for camera rotation.  
     private GameObject _3dGrid;
     private GameObject _questTarget;
 
@@ -69,6 +72,7 @@ public class UfoController : MonoBehaviour
         _laserLight = GameObject.Find("laserLight");
         _selectedObjectCamera = GameObject.Find("CameraSelectedObject");
         _selectedObjectCameraTexture = GameObject.Find("SelectedObjectCameraTexture");
+        _selectedObjectCameraText = GameObject.Find("selectedObjectCameraText").GetComponent<Text>();
         _3dGrid = GameObject.Find("3d_grid_planes");
         _questTarget = GameObject.Find("questTarget");
 
@@ -82,13 +86,14 @@ public class UfoController : MonoBehaviour
         if (_ufoCamera != null)
             _initialCameraUfoLocalPosition = _ufoCamera.transform.localPosition;  // It's set in editor
 
-        foreach (Transform child in GameObject.Find("buildings").transform)
-        {
-            child.gameObject.AddComponent<Rigidbody>();
-            var rb = child.gameObject.GetComponent<Rigidbody>();
-            rb.isKinematic = true;
-            child.gameObject.AddComponent<BoxCollider>();
-        }
+        // foreach (Transform child in GameObject.Find("buildings").transform)  // I've decided to do it in editor to prefabs (it doesn't recommend to set isStatic & colliders dynamically)
+        // {
+        //     child.gameObject.AddComponent<Rigidbody>();
+        //     var rb = child.gameObject.GetComponent<Rigidbody>();
+        //     rb.isKinematic = true;
+        //     child.gameObject.AddComponent<BoxCollider>();
+        //     child.gameObject.isStatic = true; 
+        // }
         
         Quest.Init();
 
@@ -247,7 +252,11 @@ public class UfoController : MonoBehaviour
             _ufoRotationChange.y = 0;
 
         DoTransform:
-        
+
+        if (transform.position.y < 10 && _ufoVelocityChange.y < 0)
+            // _ufoVelocityChange.y /= (11 - transform.position.y) * 10;
+            _ufoVelocityChange.y = - Mathf.Sqrt(transform.position.y / 3.75f);  // TODOO ----------- Udělat pořádně + vyřešit i nad jinými objekt než nad zemí (Raycast, SphereCast)
+
         if (_ufoVelocityChange.magnitude > 0)
             _ufoRigidBody.AddRelativeForce(_ufoVelocityChange, ForceMode.VelocityChange);
             
@@ -486,6 +495,8 @@ public class UfoController : MonoBehaviour
 
                     _selectedObjectCamera.SetActive(true);
                     _selectedObjectCameraTexture.SetActive(true);
+                    _selectedObjectCameraText.text = _selectedObject.name;
+                    _selectedObjectMustCenterPivot = _selectedObject.transform.parent && _selectedObject.transform.parent.gameObject == GameObject.Find("buildings");
 
                     var addedCollider = false;
                     if (!_selectedObject.GetComponent<SphereCollider>())
@@ -500,7 +511,7 @@ public class UfoController : MonoBehaviour
 
                     _selectionSprite.SetActive(true);
                     _selectionSprite.transform.SetParent(_selectedObject.transform);
-                    _selectionSprite.transform.localPosition = Vector3.zero;
+                    _selectionSprite.transform.localPosition = _selectedObjectMustCenterPivot ? new Vector3(0, _selectedObjectRadius, 0) : Vector3.zero;
                     var scale = _selectedObjectRadius * 3;
                     _selectionSprite.transform.localScale = new Vector3(scale, scale, scale);  // uff
 
@@ -518,14 +529,16 @@ public class UfoController : MonoBehaviour
     {
         if (!_selectedObject) return;
 
-        _selectionSprite.transform.LookAt(_ufoCamera.transform);
+        var relativePivotPosition = _selectedObjectMustCenterPivot ? new Vector3(0, _selectedObjectRadius, 0) : Vector3.zero;
+        
+        _selectionSprite.transform.LookAt(_ufoCamera.transform.position);
 
         _selectedObjectCamera.transform.position = _selectedObject.transform.position + new Vector3(
             Mathf.Cos(Time.time / 4) * _selectedObjectRadius * 2,
             _selectedObjectRadius * 1.1f,
-            Mathf.Sin(Time.time / 4) * _selectedObjectRadius * 2);
+            Mathf.Sin(Time.time / 4) * _selectedObjectRadius * 2) + relativePivotPosition;
 
-        _selectedObjectCamera.transform.LookAt(_selectedObject.transform, Vector3.up);
+        _selectedObjectCamera.transform.LookAt(_selectedObject.transform.position + relativePivotPosition, Vector3.up);
     }
 
     private void SelectNone()
@@ -534,6 +547,7 @@ public class UfoController : MonoBehaviour
         _selectionSprite.SetActive(false);
         _selectedObjectCamera.SetActive(false);
         _selectedObjectCameraTexture.SetActive(false);
+        _selectedObjectCameraText.text = "";
     }
 
     private void Update3dGrid()
@@ -548,6 +562,6 @@ public class UfoController : MonoBehaviour
 
     private void UpdateArrow()
     {
-        _arrow.transform.LookAt(_questTarget.transform);
+        // _arrow.transform.LookAt(_questTarget.transform);
     }
 }
