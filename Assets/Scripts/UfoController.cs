@@ -1,4 +1,5 @@
 using System;
+using SparseDesign.ControlledFlight;
 using Unity.VisualScripting;
 // using System.Collections;
 // using System.Collections.Generic;
@@ -42,7 +43,7 @@ public class UfoController : MonoBehaviour
     private GameObject _selectionSprite;
     private GameObject _selectedObject;
     private float _selectedObjectRadius;
-    private GameObject _jet;
+    // private GameObject _jet;
     private RaycastHit _selectionHit;
     private GameObject _laserLight;
     private GameObject _selectedObjectCamera;
@@ -51,6 +52,8 @@ public class UfoController : MonoBehaviour
     private bool _selectedObjectMustCenterPivot;      // Buildings have pivot at bottom => pivot must be centered for camera rotation.  
     private GameObject _3dGrid;
     private GameObject _questTarget;
+    public GameObject rocket;
+    private bool _launched;
 
     void Start()
     {
@@ -68,7 +71,7 @@ public class UfoController : MonoBehaviour
         _laser = GameObject.Find("laser");
         _laserButton = GameObject.Find("laserButton").GetComponent<Button>();
         _selectionSprite = GameObject.Find("selectionSprite");
-        _jet = GameObject.Find("jet");
+        // _jet = GameObject.Find("jet");
         _laserLight = GameObject.Find("laserLight");
         _selectedObjectCamera = GameObject.Find("CameraSelectedObject");
         _selectedObjectCameraTexture = GameObject.Find("SelectedObjectCameraTexture");
@@ -123,6 +126,11 @@ public class UfoController : MonoBehaviour
             _ufoRigidBody.rotation = Quaternion.Euler(45, 0, 80);
         }
 
+        if (Input.GetKey(KeyCode.X))
+        {
+            FireRocket();
+        }
+
         if (Input.GetKey(KeyCode.R))  // auto level
         {
             InitiateAutoLeveling();
@@ -138,7 +146,7 @@ public class UfoController : MonoBehaviour
             ), ForceMode.VelocityChange);*/ // TODO: Try replacing with RotateLocal to remove inertia
         }
 
-        SelectObject();  // Test key & set selected object
+        ProcessTouchEvent();  // Test key & set selected object
 
         UpdateSelection();  // Update
 
@@ -172,7 +180,6 @@ public class UfoController : MonoBehaviour
         
         UpdateArrow();
         
-        _jet.transform.Translate(Vector3.forward / 16);
         // Debug.DrawRay(_jet.transform.position, _jet.transform.TransformDirection (Vector3.forward) * 20, Color.magenta);
     }
 
@@ -480,7 +487,7 @@ public class UfoController : MonoBehaviour
         // _laserLight.SetActive(_laser.activeSelf);  // Significant performance drop!
     }
 
-    private void SelectObject()  // Set clicked object as selected
+    private void ProcessTouchEvent()
     {
         // TODO: Add selected object info
         // TODO: Use layers to avoid touching UI https://answers.unity.com/questions/132586/game-object-as-touch-trigger.html
@@ -491,31 +498,7 @@ public class UfoController : MonoBehaviour
                 // TODO: Use layerMask parameter, when number of ignored objects grows. https://docs.unity3d.com/Manual/Layers.html
                 if (_selectedObject != _selectionHit.collider.gameObject && !_selectionHit.collider.CompareTag("UFO"))
                 {
-                    _selectedObject = _selectionHit.collider.gameObject;
-
-                    _selectedObjectCamera.SetActive(true);
-                    _selectedObjectCameraTexture.SetActive(true);
-                    _selectedObjectCameraText.text = _selectedObject.name;
-                    _selectedObjectMustCenterPivot = _selectedObject.transform.parent && _selectedObject.transform.parent.gameObject == GameObject.Find("buildings");
-
-                    var addedCollider = false;
-                    if (!_selectedObject.GetComponent<SphereCollider>())
-                    {
-                        _selectedObject.AddComponent<SphereCollider>();
-                        addedCollider = true;
-                    }
-                    _selectedObjectRadius = _selectedObject.GetComponent<SphereCollider>().radius;
-
-                    if (addedCollider)
-                        Destroy(_selectedObject.GetComponent<SphereCollider>());
-
-                    _selectionSprite.SetActive(true);
-                    _selectionSprite.transform.SetParent(_selectedObject.transform);
-                    _selectionSprite.transform.localPosition = _selectedObjectMustCenterPivot ? new Vector3(0, _selectedObjectRadius, 0) : Vector3.zero;
-                    var scale = _selectedObjectRadius * 3;
-                    _selectionSprite.transform.localScale = new Vector3(scale, scale, scale);  // uff
-
-                    _selectedObjectRadius *= _selectedObject.transform.lossyScale.x;
+                    SelectObject(_selectionHit.collider.gameObject);
                 }
                 else
                     SelectNone();
@@ -523,6 +506,44 @@ public class UfoController : MonoBehaviour
             else
                 SelectNone();
         }
+    }
+
+    private void SelectObject(GameObject obj)  // Set clicked object as selected
+    {
+        _selectedObject = obj;
+
+        _selectedObjectCamera.SetActive(true);
+        _selectedObjectCameraTexture.SetActive(true);
+        _selectedObjectCameraText.text = _selectedObject.name;
+        _selectedObjectMustCenterPivot = _selectedObject.transform.parent && _selectedObject.transform.parent.gameObject == GameObject.Find("buildings");
+
+        var addedCollider = false;
+        if (!_selectedObject.GetComponent<SphereCollider>())
+        {
+            _selectedObject.AddComponent<SphereCollider>();
+            addedCollider = true;
+        }
+        _selectedObjectRadius = _selectedObject.GetComponent<SphereCollider>().radius;
+
+        if (addedCollider)
+            Destroy(_selectedObject.GetComponent<SphereCollider>());
+
+        _selectionSprite.SetActive(true);
+        _selectionSprite.transform.SetParent(_selectedObject.transform);
+        _selectionSprite.transform.localPosition = _selectedObjectMustCenterPivot ? new Vector3(0, _selectedObjectRadius, 0) : Vector3.zero;
+        var scale = _selectedObjectRadius * 3;
+        _selectionSprite.transform.localScale = new Vector3(scale, scale, scale);  // uff
+
+        _selectedObjectRadius *= _selectedObject.transform.lossyScale.x;
+    }
+
+    public void SelectNone()
+    {
+        _selectedObject = null;
+        _selectionSprite.SetActive(false);
+        _selectedObjectCamera.SetActive(false);
+        _selectedObjectCameraTexture.SetActive(false);
+        _selectedObjectCameraText.text = "";
     }
 
     private void UpdateSelection()  // Updates selection camera & selection sprite in realtime
@@ -541,15 +562,6 @@ public class UfoController : MonoBehaviour
         _selectedObjectCamera.transform.LookAt(_selectedObject.transform.position + relativePivotPosition, Vector3.up);
     }
 
-    private void SelectNone()
-    {
-        _selectedObject = null;
-        _selectionSprite.SetActive(false);
-        _selectedObjectCamera.SetActive(false);
-        _selectedObjectCameraTexture.SetActive(false);
-        _selectedObjectCameraText.text = "";
-    }
-
     private void Update3dGrid()
     {
         // _3dGrid.transform.rotation = Quaternion.LookRotation(_ufoRigidBody.transform.eulerAngles);
@@ -562,6 +574,29 @@ public class UfoController : MonoBehaviour
 
     private void UpdateArrow()
     {
-        // _arrow.transform.LookAt(_questTarget.transform);
+        if (!Quest.Current.QuestTarget)
+            return;
+        _arrow.transform.LookAt(Quest.Current.QuestTarget.transform);
     }
+    
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.name == Quest.Current.QuestTarget.name)
+            Quest.Complete();
+    }
+
+    private void FireRocket()
+    {
+        if (_launched) return;
+
+        _launched = true;
+        
+        var newRocket = Instantiate(rocket);
+        newRocket.transform.position = transform.position;
+        newRocket.transform.Translate(Vector3.down);
+        newRocket.GetComponent<MissileSupervisor>().m_guidanceSettings.m_target = _selectedObject;
+        SelectObject(newRocket);
+        newRocket.GetComponent<MissileSupervisor>().StartLaunchSequence();
+    }
+
 }

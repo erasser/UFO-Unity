@@ -11,17 +11,12 @@ public class QuestTarget : MonoBehaviour
         transform.Rotate (- Time.deltaTime * 20 * Vector3.up, Space.World);
     }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.CompareTag("UFO"))
-        {
-            print("complete");
-            Quest.Complete();
-        }
-    }
-
-    // public int Get()
+    // private void OnTriggerEnter(Collider other)  // Moved to UfoController
     // {
-    //     return questIndex;
+    //     if (other.CompareTag("UFO"))
+    //     {
+    //         Quest.Complete();
+    //     }
     // }
+
 }

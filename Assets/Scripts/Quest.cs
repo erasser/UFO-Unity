@@ -14,28 +14,27 @@ public struct Quest
     private readonly string _name;    
     private readonly string _description;
     private readonly string _accomplishedText;
-    private readonly GameObject _questTarget;
-    private bool _done;
-    private static int _activeQuestIndex;  // index of active quest
+    public readonly GameObject QuestTarget;
+    // private bool _done;
+    private static int _currentQuestIndex = -1;  // index of active quest
     // add type?
     // add parent GameObject?
 
-    private static Quest _active;
+    public static Quest Current;
     // private static readonly Quest[] MainQuests;
     // List<int> termsList = new List<int>();
 
     private static readonly List<Quest> MainQuests = new List<Quest>();
 
     private static string _questText;  // Text to be shown in UI
-    private static readonly Text QuestsText;
-    private static readonly GameObject TargetLocationMarker;
+    private static readonly Text QuestText;
 
     public static void Init()
     {
         /* Must be called, so the static constructor is executed. Just to fuck with me. */
         //https://stackoverflow.com/questions/59938630/why-the-static-constructor-in-a-struct-gets-called-when-calling-a-non-static-met
         
-        ShowActiveQuest();
+        ShowCurrent();
     }
 
     // dynamic constructor (has a static context)
@@ -44,8 +43,8 @@ public struct Quest
         _name = name;
         _description = description;
         _accomplishedText = accomplishedText;
-        _questTarget = GameObject.Find("questTargets").transform.GetChild(MainQuests.Count).gameObject;
-        _done = false;
+        QuestTarget = GameObject.Find("questTargets").transform.GetChild(MainQuests.Count).gameObject;
+        // _done = false;
     }
 
     // static constructor
@@ -77,55 +76,40 @@ public struct Quest
             "You have finished all quests. Now you can fuck off.",
             "Fuck off."/*,
             new Vector3( 0, 0, 0)*/));
-        
-        // MainQuests = new[] {quest0, quest1, quest2, quest3};
 
-        _active = MainQuests[0];
-
-        QuestsText = GameObject.Find("questsText").GetComponent<Text>();
-        TargetLocationMarker = GameObject.Find("questTarget");
+        QuestText = GameObject.Find("questText").GetComponent<Text>();
+        Next();
     }
-
-    // private static Quest GetFirst()
-    // {
-    //     var quest = MainQuests[0];
-    //     ShowActiveQuest();
-    //     return quest;
-    // }
 
     private static void Next()
     {
-        if (_activeQuestIndex == MainQuests.Count - 1)
+        if (_currentQuestIndex == MainQuests.Count - 1)  // this is the last quest
             return;
-        // var quest = MainQuests[++_activeQuestIndex];
-        // ShowActiveQuest();
-        // return quest;
-        _active = MainQuests[++_activeQuestIndex];
-        ShowActiveQuest();
+        Current = MainQuests[++_currentQuestIndex];
+        ShowCurrent();
     }
 
     public static void Complete()
     {
-        _active._done = true;
+        // _current._done = true;
+        Current.QuestTarget.SetActive(false);
         // TODO: Show _accomplishedText
         Next();
     }
 
-    // private static Quest GetActive()
+    // private static Quest GetCurrent()
     // {
-    //     var quest = MainQuests[_activeQuestIndex];
-    //     ShowActiveQuest();
-    //     return quest;
+    //     return  MainQuests[_currentQuestIndex];
     // }
 
-    private static void ShowActiveQuest()  // https://docs.unity3d.com/Packages/com.unity.ugui@1.0/manual/StyledText.html
+    private static void ShowCurrent()  // https://docs.unity3d.com/Packages/com.unity.ugui@1.0/manual/StyledText.html
     {
-        var quest = MainQuests[_activeQuestIndex];
+        Current.QuestTarget.SetActive(true);
         
         // ▶▷▸▹▻◆◈◇
-        QuestsText.text = "◈ <b>" + quest._name + "</b>" +
-                     "\n   " + new string('-', quest._name.Length) + "\n" +
-                     quest._description;
+        QuestText.text = "◈ <b>" + Current._name + "</b>" +
+                     "\n   " + new string('-', Current._name.Length) + "\n" +
+                     Current._description;
 
         // ShowTextDynamically();  // TODO: Buď postupně zobrazit po znacích, nebo spíš zobrazit hned všechny znaky, ale probordelené a vybordelit z nich správný text.
 
@@ -134,6 +118,6 @@ public struct Quest
 
     private void ShowTextDynamically()
     {
-        //QuestsText.text += "";
+        //QuestText.text += "";
     }
 }
