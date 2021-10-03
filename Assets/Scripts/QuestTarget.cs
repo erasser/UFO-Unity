@@ -6,7 +6,7 @@ public class QuestTarget : MonoBehaviour
 {
     // public int questIndex;  // index from Quest.MainQuests array
     
-    void Update()
+    void FixedUpdate()
     {
         transform.Rotate (- Time.deltaTime * 20 * Vector3.up, Space.World);
     }

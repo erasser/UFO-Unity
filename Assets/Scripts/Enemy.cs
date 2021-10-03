@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -30,5 +31,10 @@ public class Enemy : MonoBehaviour
     {
         // UfoController.SelectNone();
         // Destroy(this);
+    }
+
+    public void OnCollisionEnter(Collision other)  // TODO: Rather do this by rocket MissileSupervisor.interceptEvent
+    {
+        print(other.collider.tag);
     }
 }

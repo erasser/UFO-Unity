@@ -10,41 +10,36 @@ public class GameController : MonoBehaviour
 {
     [SerializeField] private FixedJoystick joystickHorizontalPlane;
     [SerializeField] private FixedJoystick joystickVerticalPlane;
+    [SerializeField] private GameObject selectionSpritePrefab;
     private static GameObject _arrow;
     private static Text _infoText; // UI element
     private Button _laserButton; // UI element
-    private static GameObject _selectionSprite;
     public static GameObject SelectedObject;
     private static float _selectedObjectRadius;
     private RaycastHit _selectionHit;
     private static GameObject _selectedObjectCamera;
     private static GameObject _selectedObjectCameraTexture; // UI element
     private static Text _selectedObjectCameraText; // UI element
-
-    private static bool
-        _selectedObjectMustCenterPivot; // Buildings have pivot at bottom => pivot must be centered for camera rotation.  
-
+    private static bool _selectedObjectMustCenterPivot; // Buildings have pivot at bottom => pivot must be centered for camera rotation.  
     private GameObject _3dGrid;
-    
     private Ufo _ufoInstance;
-
+    private GameObject _selectionSpriteInstance;
 
     void Start()
     {
         _infoText = GameObject.Find("InfoText").GetComponent<Text>();
         _arrow = GameObject.Find("arrow");
         _laserButton = GameObject.Find("laserButton").GetComponent<Button>();
-        _selectionSprite = GameObject.Find("selectionSprite");
         _selectedObjectCamera = GameObject.Find("CameraSelectedObject");
         _selectedObjectCameraTexture = GameObject.Find("SelectedObjectCameraTexture");
         _selectedObjectCameraText = GameObject.Find("selectedObjectCameraText").GetComponent<Text>();
         _3dGrid = GameObject.Find("3d_grid_planes");
         _selectedObjectCamera.SetActive(false);
         _selectedObjectCameraTexture.SetActive(false);
-        _selectionSprite.SetActive(false);
         _laserButton.onClick.AddListener(Ufo.ToggleLaser);
-        _ufoInstance = GameObject.Find("UFO").transform.GetComponent<Ufo>();  // Ufo.cs - allows me to call non-static method
-
+        _ufoInstance = GameObject.Find("UFO").transform.GetComponent<Ufo>();            // Ufo.cs - allows me to call non-static method
+        _selectionSpriteInstance = Instantiate(selectionSpritePrefab);
+        
         Quest.Init();
     }
 
@@ -101,7 +96,7 @@ private void ProcessTouchEvent()
         }
     }
 
-    public static void SelectObject(GameObject obj)  // Set clicked object as selected
+    public void SelectObject(GameObject obj)  // Set clicked object as selected
     {
         SelectedObject = obj;
 
@@ -121,11 +116,11 @@ private void ProcessTouchEvent()
         if (addedCollider)
             Destroy(SelectedObject.GetComponent<SphereCollider>());
 
-        _selectionSprite.SetActive(true);
-        _selectionSprite.transform.SetParent(SelectedObject.transform);
-        _selectionSprite.transform.localPosition = _selectedObjectMustCenterPivot ? new Vector3(0, _selectedObjectRadius, 0) : Vector3.zero;
+        _selectionSpriteInstance.SetActive(true);
+        _selectionSpriteInstance.transform.SetParent(SelectedObject.transform);
+        _selectionSpriteInstance.transform.localPosition = _selectedObjectMustCenterPivot ? new Vector3(0, _selectedObjectRadius, 0) : Vector3.zero;
         var scale = _selectedObjectRadius * 3;
-        _selectionSprite.transform.localScale = new Vector3(scale, scale, scale);  // uff
+        _selectionSpriteInstance.transform.localScale = new Vector3(scale, scale, scale);  // uff
 
         _selectedObjectRadius *= SelectedObject.transform.lossyScale.x;
     }
@@ -133,7 +128,7 @@ private void ProcessTouchEvent()
     public void SelectNone()
     {
         SelectedObject = null;
-        _selectionSprite.SetActive(false);
+        _selectionSpriteInstance.SetActive(false);
         _selectedObjectCamera.SetActive(false);
         _selectedObjectCameraTexture.SetActive(false);
         _selectedObjectCameraText.text = "";
@@ -144,8 +139,6 @@ private void ProcessTouchEvent()
         if (!SelectedObject) return;
 
         var relativePivotPosition = _selectedObjectMustCenterPivot ? new Vector3(0, _selectedObjectRadius, 0) : Vector3.zero;
-        
-        _selectionSprite.transform.LookAt(Ufo.UfoCamera.transform.position);
 
         _selectedObjectCamera.transform.position = SelectedObject.transform.position + new Vector3(
             Mathf.Cos(Time.time / 4) * _selectedObjectRadius * 2,

@@ -34,21 +34,21 @@ public class Ufo : MonoBehaviour
     private GameObject _laserLight;
     public GameObject rocket;
     private static bool _launched;
+    private GameController _gameControllerInstance;
 
     void Start()
     {
         Application.targetFrameRate = 666;
 
-        // _ufo = GameObject.Find("UFO_low_poly");      // TODO: This is this! :D  // Odstranit _ufo z této třídy, zbytečné
         _rigidBody = GetComponent<Rigidbody>();
         _forceBeam = GameObject.Find("ForceBeam");
         UfoCamera = GameObject.Find("CameraUfo");
         _topCamera = GameObject.Find("CameraTop");
         _laser = GameObject.Find("laser");
-        // _jet = GameObject.Find("jet");
         _laserLight = GameObject.Find("laserLight");
         _laser.SetActive(false);
         _laserLight.SetActive(false);
+        _gameControllerInstance = GameObject.Find("GameController").transform.GetComponent<GameController>();
 
         if (UfoCamera != null)
             _initialCameraUfoLocalPosition = UfoCamera.transform.localPosition;  // It's set in editor
@@ -115,7 +115,6 @@ public class Ufo : MonoBehaviour
         //
         //     _ufoCamera.transform.Rotate(_forceBeamEnabled ? new Vector3(10, 0, 0) : new Vector3(-10, 0, 0));
         // }
-
     }
     
     void FixedUpdate()
@@ -212,7 +211,7 @@ public class Ufo : MonoBehaviour
         //     cubeHelper.transform.position = _rigidBody.transform.position;  // Its not a reference, because its a struct?
         // }
     }
-
+    
     private void UpdateCameraUfoDistance()
     {
         if (!UfoCamera) return;
@@ -414,7 +413,7 @@ public class Ufo : MonoBehaviour
         newRocket.transform.position = transform.position;
         newRocket.transform.Translate(Vector3.down);
         newRocket.GetComponent<MissileSupervisor>().m_guidanceSettings.m_target = GameController.SelectedObject;
-        GameController.SelectObject(newRocket);
+        _gameControllerInstance.SelectObject(newRocket);
         newRocket.GetComponent<MissileSupervisor>().StartLaunchSequence();
     }
 
