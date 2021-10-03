@@ -16,6 +16,7 @@ object jitters when moving                                      Transform it in 
 
  TODO
 ══════
+► Zvážit toon grafiku
 • USE 'MOBILE' SHADERS!
 • ZKUSIT ASTEROIDY I S FYZIKOU POMOCÍ PARTICLES!
 ••• Neni tam náhodou stále ten defaultní Skybox (nebo jak se to jmenuje?) Ukázal se při buildu
