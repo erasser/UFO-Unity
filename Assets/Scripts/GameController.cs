@@ -102,28 +102,39 @@ public class GameController : MonoBehaviour
 
         if (!SelectedObject.transform.GetComponent<Ufo>())
             SelectedObject.AddComponent(Type.GetType("SelectedObjectDynamic"));
-
+print(SelectedObject);
         _selectedObjectCamera.SetActive(true);
         _selectedObjectCameraTexture.SetActive(true);
         _selectedObjectCameraText.text = SelectedObject.name;
         SelectedObjectMustCenterPivot = SelectedObject.transform.parent && SelectedObject.transform.parent.gameObject == GameObject.Find("buildings");
 
-        var sphereCollider = SelectedObject.AddComponent<SphereCollider>();
-        SelectedObjectWorldRadius = sphereCollider.radius * SelectedObject.transform.lossyScale.x;
-        Destroy(sphereCollider);
-        SelectedObjectRelativeUpPosition = SelectedObjectMustCenterPivot ? new Vector3(0, SelectedObjectWorldRadius, 0) : Vector3.zero;
-        var scale = SelectedObjectWorldRadius * 4;
+        // var sphereCollider = SelectedObject.AddComponent<SphereCollider>();
+        // SelectedObjectWorldRadius = sphereCollider.radius * SelectedObject.transform.lossyScale.x;
+        // Destroy(sphereCollider);
+        // SelectedObjectRelativeUpPosition = SelectedObjectMustCenterPivot ? new Vector3(0, SelectedObjectWorldRadius, 0) : Vector3.zero;
+        // var scale = SelectedObjectWorldRadius * 4;
+        
+        
+        
         _selectionSpriteInstance.transform.localScale = new Vector3(scale, scale, scale);  // uff
         _selectionSpriteInstance.SetActive(true);
     }
 
     public void SelectNone()
     {
-        SelectedObject = null;
-        _selectedObjectCamera.SetActive(false);
-        _selectedObjectCameraTexture.SetActive(false);
-        _selectedObjectCameraText.text = "";
-        _selectionSpriteInstance.SetActive(false);
+        try
+        {
+            SelectedObject = null;
+            _selectedObjectCamera.SetActive(false);
+            _selectedObjectCameraTexture.SetActive(false);
+            _selectedObjectCameraText.text = "";
+            _selectionSpriteInstance.SetActive(false);
+        }
+        catch (Exception e)
+        {
+            print("» This message should be printed when the game is stopped only. If you see this during the game, check the error here ↓↓ .");
+            // throw new Exception(e.Message);
+        }
     }
 
     private void UpdateSelection()  // Updates selection camera & selection sprite in realtime

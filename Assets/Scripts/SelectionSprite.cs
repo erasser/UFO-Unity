@@ -19,8 +19,6 @@ public class SelectionSprite : MonoBehaviour
 
     private void UpdateMe()
     {
-        // _selectionSpriteInstance.transform.localPosition = _selectedObjectMustCenterPivot ? new Vector3(0, SelectedObjectRadius, 0) : Vector3.zero;
-
         transform.position = SelectedObjectMustCenterPivot  // I've chosen this approach, so I need not to manage instantiating & destroying the selection sprite
             ? SelectedObject.transform.position + SelectedObjectRelativeUpPosition
             : SelectedObject.transform.position;
