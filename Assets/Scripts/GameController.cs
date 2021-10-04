@@ -1,6 +1,5 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -15,12 +14,13 @@ public class GameController : MonoBehaviour
     private static Text _infoText; // UI element
     private Button _laserButton; // UI element
     public static GameObject SelectedObject;
-    private static float _selectedObjectRadius;
+    public static float SelectedObjectWorldRadius;
+    public static Vector3 SelectedObjectRelativeUpPosition;
     private RaycastHit _selectionHit;
     private static GameObject _selectedObjectCamera;
     private static GameObject _selectedObjectCameraTexture; // UI element
     private static Text _selectedObjectCameraText; // UI element
-    private static bool _selectedObjectMustCenterPivot; // Buildings have pivot at bottom => pivot must be centered for camera rotation.  
+    public static bool SelectedObjectMustCenterPivot; // Buildings have pivot at bottom => pivot must be centered for camera rotation.  
     private GameObject _3dGrid;
     private Ufo _ufoInstance;
     private GameObject _selectionSpriteInstance;
@@ -75,7 +75,7 @@ public class GameController : MonoBehaviour
         _ufoInstance.MoveUfo(joystickHorizontalPlane, joystickVerticalPlane);
     }
 
-private void ProcessTouchEvent()
+    private void ProcessTouchEvent()
     {
         // TODO: Add selected object info
         // TODO: Use layers to avoid touching UI https://answers.unity.com/questions/132586/game-object-as-touch-trigger.html
@@ -100,58 +100,48 @@ private void ProcessTouchEvent()
     {
         SelectedObject = obj;
 
+        if (!SelectedObject.transform.GetComponent<Ufo>())
+            SelectedObject.AddComponent(Type.GetType("SelectedObjectDynamic"));
+
         _selectedObjectCamera.SetActive(true);
         _selectedObjectCameraTexture.SetActive(true);
         _selectedObjectCameraText.text = SelectedObject.name;
-        _selectedObjectMustCenterPivot = SelectedObject.transform.parent && SelectedObject.transform.parent.gameObject == GameObject.Find("buildings");
+        SelectedObjectMustCenterPivot = SelectedObject.transform.parent && SelectedObject.transform.parent.gameObject == GameObject.Find("buildings");
 
-        var addedCollider = false;
-        if (!SelectedObject.GetComponent<SphereCollider>())
-        {
-            SelectedObject.AddComponent<SphereCollider>();
-            addedCollider = true;
-        }
-        _selectedObjectRadius = SelectedObject.GetComponent<SphereCollider>().radius;
-
-        if (addedCollider)
-            Destroy(SelectedObject.GetComponent<SphereCollider>());
-
-        _selectionSpriteInstance.SetActive(true);
-        _selectionSpriteInstance.transform.SetParent(SelectedObject.transform);
-        _selectionSpriteInstance.transform.localPosition = _selectedObjectMustCenterPivot ? new Vector3(0, _selectedObjectRadius, 0) : Vector3.zero;
-        var scale = _selectedObjectRadius * 3;
+        var sphereCollider = SelectedObject.AddComponent<SphereCollider>();
+        SelectedObjectWorldRadius = sphereCollider.radius * SelectedObject.transform.lossyScale.x;
+        Destroy(sphereCollider);
+        SelectedObjectRelativeUpPosition = SelectedObjectMustCenterPivot ? new Vector3(0, SelectedObjectWorldRadius, 0) : Vector3.zero;
+        var scale = SelectedObjectWorldRadius * 4;
         _selectionSpriteInstance.transform.localScale = new Vector3(scale, scale, scale);  // uff
-
-        _selectedObjectRadius *= SelectedObject.transform.lossyScale.x;
+        _selectionSpriteInstance.SetActive(true);
     }
 
     public void SelectNone()
     {
         SelectedObject = null;
-        _selectionSpriteInstance.SetActive(false);
         _selectedObjectCamera.SetActive(false);
         _selectedObjectCameraTexture.SetActive(false);
         _selectedObjectCameraText.text = "";
+        _selectionSpriteInstance.SetActive(false);
     }
 
     private void UpdateSelection()  // Updates selection camera & selection sprite in realtime
     {
         if (!SelectedObject) return;
 
-        var relativePivotPosition = _selectedObjectMustCenterPivot ? new Vector3(0, _selectedObjectRadius, 0) : Vector3.zero;
+        var relativePivotPosition = SelectedObjectMustCenterPivot ? new Vector3(0, SelectedObjectWorldRadius, 0) : Vector3.zero;
 
         _selectedObjectCamera.transform.position = SelectedObject.transform.position + new Vector3(
-            Mathf.Cos(Time.time / 4) * _selectedObjectRadius * 2,
-            _selectedObjectRadius * 1.1f,
-            Mathf.Sin(Time.time / 4) * _selectedObjectRadius * 2) + relativePivotPosition;
+            Mathf.Cos(Time.time / 4) * SelectedObjectWorldRadius * 2,
+            SelectedObjectWorldRadius * 1.1f,
+            Mathf.Sin(Time.time / 4) * SelectedObjectWorldRadius * 2) + relativePivotPosition;
 
         _selectedObjectCamera.transform.LookAt(SelectedObject.transform.position + relativePivotPosition, Vector3.up);
     }
 
     private void Update3dGrid()
     {
-        // _3dGrid.transform.rotation = Quaternion.LookRotation(_rigidBody.transform.eulerAngles);
-        // _3dGrid.transform.rotation = transform.rotation;
         _3dGrid.transform.localEulerAngles = new Vector3(
             transform.localEulerAngles.x,
             -transform.localEulerAngles.y,

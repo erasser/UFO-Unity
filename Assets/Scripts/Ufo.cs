@@ -1,14 +1,9 @@
-using System;
 using SparseDesign.ControlledFlight;
-using Unity.VisualScripting;
 // using System.Collections;
 // using System.Collections.Generic;
 // using Unity.VisualScripting;
 // using UnityEngine.Rendering;
 using UnityEngine;
-using UnityEngine.Android;
-using UnityEngine.EventSystems;
-using UnityEngine.UI;
 
 // TODO:  Limit speed by applying magnitude of velocity vector, so speed of particular axes are not independent and so UFO has its 'total' max speed limit
 // TODO:  Try to apply <TrailRenderer>

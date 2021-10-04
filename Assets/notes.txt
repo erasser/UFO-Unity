@@ -16,8 +16,10 @@ object jitters when moving                                      Transform it in 
 
  TODO
 ══════
+► Implement bounding sphere!
 ► Zvážit toon grafiku
-• USE 'MOBILE' SHADERS!
+► Implementovat přitahování a vrhání objektů
+• USE 'MOBILE' SHADERS! And use Mobile template when creating new project!
 • ZKUSIT ASTEROIDY I S FYZIKOU POMOCÍ PARTICLES!
 ••• Neni tam náhodou stále ten defaultní Skybox (nebo jak se to jmenuje?) Ukázal se při buildu
 • Particles ring - Change Simulation space to World & swap y and z axes
@@ -50,6 +52,9 @@ object jitters when moving                                      Transform it in 
 » průlet hvězdama
 » přidat něco jako bombu, buď vystřelenou, nebo přidělanou k asteroidu => pěkný efekt, jak to rozhodí asteroidy
 » vyřešit kolizi asteroidů při jejich generování, zkusit nějakej raycast?
+» Destroy target -> quest for destroying target
+» proč rocket nebourá cestou do domu?
+» try shield material on selection sprite
 
  levels
 ════════
