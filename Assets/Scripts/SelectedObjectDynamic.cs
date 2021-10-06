@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 // This script is dynamically added to each selected object (just once).
@@ -6,11 +7,16 @@ public class SelectedObjectDynamic : MonoBehaviour
 {
     private GameController _gameControllerInstance;
     public float boundingSphereRadius;
+    public float verticalRadius;
+
+    private void Awake()
+    {
+        CalculateBoundingSphereRadius();
+    }
 
     void Start()
     {
         _gameControllerInstance = GameObject.Find("GameController").transform.GetComponent<GameController>();
-        CalculateBoundingSphereRadius();
     }
 
     private void OnDestroy()
@@ -20,26 +26,22 @@ public class SelectedObjectDynamic : MonoBehaviour
 
     private void CalculateBoundingSphereRadius()
     {
-        /*  TODO: Remove this  -------------------------------------------------------------------------------
-        if (boundingSphereRadius != 0) return;
         var mesh = GetComponent<MeshFilter>().sharedMesh;
-        if (!mesh.isReadable) return;
-        print("zzz");
-        float maxRadius = 0;
-        var length = mesh.vertices.Length;
-        for (var i = 0; i < length; i++)  // https://codingsight.com/foreach-or-for-that-is-the-question
-        {
-            maxRadius = Mathf.Max(maxRadius, Mathf.Abs(Mathf.Sqrt(
-                mesh.vertices[i].x * mesh.vertices[i].x +
-                mesh.vertices[i].y * mesh.vertices[i].y +
-                mesh.vertices[i].z * mesh.vertices[i].z)));
-        }*/
 
-        var mesh = GetComponent<MeshFilter>().sharedMesh;
-        
-        boundingSphereRadius = Mathf.Sqrt(
-            mesh.bounds.extents.x * mesh.bounds.extents.x + transform.localScale.x * transform.localScale.x +
-            mesh.bounds.extents.y * mesh.bounds.extents.y + transform.localScale.y * transform.localScale.y +
-            mesh.bounds.extents.z * mesh.bounds.extents.z + transform.localScale.z * transform.localScale.z);
+        verticalRadius = mesh.bounds.extents.y * transform.lossyScale.y;
+
+        // The same bounding sphere as SphereCollider has (I believe)
+        boundingSphereRadius = Mathf.Max(
+            mesh.bounds.extents.x * transform.lossyScale.x,
+            verticalRadius,
+            mesh.bounds.extents.z * transform.lossyScale.z);
+
+        // Real bounding sphere, but it's too big :(
+        // Mathf.Sqrt(Mathf.Pow(mesh.bounds.extents.x, 2) +
+        // Mathf.Pow(mesh.bounds.extents.y, 2) +
+        // Mathf.Pow(mesh.bounds.extents.z, 2)) * transform.lossyScale.z;
+
+
+
     }
 }

@@ -14,7 +14,8 @@ public class GameController : MonoBehaviour
     private static Text _infoText; // UI element
     private Button _laserButton; // UI element
     public static GameObject SelectedObject;
-    public static float SelectedObjectWorldRadius;
+    private static SelectedObjectDynamic _selectedObjectScript;
+    // public static float SelectedObjectWorldRadius;
     public static Vector3 SelectedObjectRelativeUpPosition;
     private RaycastHit _selectionHit;
     private static GameObject _selectedObjectCamera;
@@ -100,9 +101,13 @@ public class GameController : MonoBehaviour
     {
         SelectedObject = obj;
 
-        if (!SelectedObject.transform.GetComponent<Ufo>())
+        _selectedObjectScript = SelectedObject.transform.GetComponent<SelectedObjectDynamic>();
+        if (!_selectedObjectScript)
+        {
             SelectedObject.AddComponent(Type.GetType("SelectedObjectDynamic"));
-print(SelectedObject);
+            _selectedObjectScript = SelectedObject.transform.GetComponent<SelectedObjectDynamic>();
+        }
+
         _selectedObjectCamera.SetActive(true);
         _selectedObjectCameraTexture.SetActive(true);
         _selectedObjectCameraText.text = SelectedObject.name;
@@ -113,9 +118,9 @@ print(SelectedObject);
         // Destroy(sphereCollider);
         // SelectedObjectRelativeUpPosition = SelectedObjectMustCenterPivot ? new Vector3(0, SelectedObjectWorldRadius, 0) : Vector3.zero;
         // var scale = SelectedObjectWorldRadius * 4;
-        
-        
-        
+
+        SelectedObjectRelativeUpPosition = SelectedObjectMustCenterPivot ? new Vector3(0, _selectedObjectScript.verticalRadius, 0) : Vector3.zero;
+        var scale = _selectedObjectScript.boundingSphereRadius * 4;
         _selectionSpriteInstance.transform.localScale = new Vector3(scale, scale, scale);  // uff
         _selectionSpriteInstance.SetActive(true);
     }
@@ -141,12 +146,12 @@ print(SelectedObject);
     {
         if (!SelectedObject) return;
 
-        var relativePivotPosition = SelectedObjectMustCenterPivot ? new Vector3(0, SelectedObjectWorldRadius, 0) : Vector3.zero;
+        var relativePivotPosition = SelectedObjectMustCenterPivot ? new Vector3(0, _selectedObjectScript.verticalRadius, 0) : Vector3.zero;
 
         _selectedObjectCamera.transform.position = SelectedObject.transform.position + new Vector3(
-            Mathf.Cos(Time.time / 4) * SelectedObjectWorldRadius * 2,
-            SelectedObjectWorldRadius * 1.1f,
-            Mathf.Sin(Time.time / 4) * SelectedObjectWorldRadius * 2) + relativePivotPosition;
+            Mathf.Cos(Time.time / 4) * _selectedObjectScript.boundingSphereRadius * 2,
+            _selectedObjectScript.verticalRadius + 4,
+            Mathf.Sin(Time.time / 4) * _selectedObjectScript.boundingSphereRadius * 2) + relativePivotPosition;
 
         _selectedObjectCamera.transform.LookAt(SelectedObject.transform.position + relativePivotPosition, Vector3.up);
     }
