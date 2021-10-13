@@ -25,22 +25,26 @@ public class GameController : MonoBehaviour
     private GameObject _3dGrid;
     private Ufo _ufoInstance;
     private GameObject _selectionSpriteInstance;
+    public static Vector2 SelectedObjectCameraFOV;  // .x = horizontal FOV, .y = vertical FOV
 
     void Start()
     {
         _infoText = GameObject.Find("InfoText").GetComponent<Text>();
         _arrow = GameObject.Find("arrow");
         _laserButton = GameObject.Find("laserButton").GetComponent<Button>();
-        _selectedObjectCamera = GameObject.Find("CameraSelectedObject");
-        _selectedObjectCameraTexture = GameObject.Find("SelectedObjectCameraTexture");
-        _selectedObjectCameraText = GameObject.Find("selectedObjectCameraText").GetComponent<Text>();
-        _3dGrid = GameObject.Find("3d_grid_planes");
-        _selectedObjectCamera.SetActive(false);
-        _selectedObjectCameraTexture.SetActive(false);
         _laserButton.onClick.AddListener(Ufo.ToggleLaser);
+        _3dGrid = GameObject.Find("3d_grid_planes");
         _ufoInstance = GameObject.Find("UFO").transform.GetComponent<Ufo>();            // Ufo.cs - allows me to call non-static method
         _selectionSpriteInstance = Instantiate(selectionSpritePrefab);
-        
+        _selectedObjectCamera = GameObject.Find("CameraSelectedObject");
+        _selectedObjectCamera.SetActive(false);
+        _selectedObjectCameraTexture = GameObject.Find("SelectedObjectCameraTexture");
+        _selectedObjectCameraText = GameObject.Find("selectedObjectCameraText").GetComponent<Text>();
+        _selectedObjectCameraTexture.SetActive(false);
+
+        var vFOV = _selectedObjectCamera.GetComponent<Camera>().fieldOfView;
+        SelectedObjectCameraFOV = new Vector2(Camera.VerticalToHorizontalFieldOfView(vFOV, 2), vFOV);
+
         Quest.Init();
     }
 
@@ -51,7 +55,7 @@ public class GameController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        ProcessControls();  // cause UFO movement
+        ProcessControls();   // Causes UFO movement
         UpdateSelection();   // Updates selection sprite & camera
         UpdateArrow();
         Update3dGrid();
@@ -59,10 +63,12 @@ public class GameController : MonoBehaviour
 
     private void ProcessControls()
     {
-        if (!(
-            joystickHorizontalPlane.Direction.magnitude > 0 ||
-            joystickVerticalPlane.Direction.magnitude > 0 ||
-            Input.GetKey(KeyCode.Space) ||
+        if (joystickHorizontalPlane.Direction.x != 0 || joystickHorizontalPlane.Direction.y != 0 ||
+            joystickVerticalPlane.Direction.x != 0 || joystickVerticalPlane.Direction.y != 0)
+            
+            _ufoInstance.MoveUfo(joystickHorizontalPlane, joystickVerticalPlane);
+
+        if (Input.GetKey(KeyCode.Space) ||
             Input.GetKey(KeyCode.LeftControl) ||
             Input.GetKey(KeyCode.W) ||
             Input.GetKey(KeyCode.A) ||
@@ -70,10 +76,9 @@ public class GameController : MonoBehaviour
             Input.GetKey(KeyCode.D) ||
             Input.GetKey(KeyCode.Q) ||
             Input.GetKey(KeyCode.E) ||
-            Input.GetKey(KeyCode.LeftShift)
-        )) return;
-
-        _ufoInstance.MoveUfo(joystickHorizontalPlane, joystickVerticalPlane);
+            Input.GetKey(KeyCode.LeftShift))
+            
+            _ufoInstance.MoveUfo();
     }
 
     private void ProcessTouchEvent()
@@ -119,7 +124,7 @@ public class GameController : MonoBehaviour
         // SelectedObjectRelativeUpPosition = SelectedObjectMustCenterPivot ? new Vector3(0, SelectedObjectWorldRadius, 0) : Vector3.zero;
         // var scale = SelectedObjectWorldRadius * 4;
 
-        SelectedObjectRelativeUpPosition = SelectedObjectMustCenterPivot ? new Vector3(0, _selectedObjectScript.verticalRadius, 0) : Vector3.zero;
+        SelectedObjectRelativeUpPosition = SelectedObjectMustCenterPivot ? new Vector3(0, _selectedObjectScript.verticalExtents, 0) : Vector3.zero;
         var scale = _selectedObjectScript.boundingSphereRadius * 4;
         _selectionSpriteInstance.transform.localScale = new Vector3(scale, scale, scale);  // uff
         _selectionSpriteInstance.SetActive(true);
@@ -146,22 +151,40 @@ public class GameController : MonoBehaviour
     {
         if (!SelectedObject) return;
 
-        var relativePivotPosition = SelectedObjectMustCenterPivot ? new Vector3(0, _selectedObjectScript.verticalRadius, 0) : Vector3.zero;
+        var relativePivotPosition = SelectedObjectMustCenterPivot ? new Vector3(0, _selectedObjectScript.verticalExtents, 0) : Vector3.zero;
+        var cameraVerticalOffset = new Vector3(0, 1, 0);  // The higher is the camera, the lower is the camera target
 
-        _selectedObjectCamera.transform.position = SelectedObject.transform.position + new Vector3(
-            Mathf.Cos(Time.time / 4) * _selectedObjectScript.boundingSphereRadius * 2,
-            _selectedObjectScript.verticalRadius + 4,
-            Mathf.Sin(Time.time / 4) * _selectedObjectScript.boundingSphereRadius * 2) + relativePivotPosition;
+        // camera position
+        var selectedObjectPosition = SelectedObject.transform.position;
+        _selectedObjectCamera.transform.position = selectedObjectPosition + new Vector3(
+            Mathf.Cos(Time.time / 4) * _selectedObjectScript.cameraDistance,  // there was .boundingSphereRadius * 2
+            _selectedObjectScript.verticalExtents,  // there was + 4
+            Mathf.Sin(Time.time / 4) * _selectedObjectScript.cameraDistance) + relativePivotPosition + cameraVerticalOffset;
 
-        _selectedObjectCamera.transform.LookAt(SelectedObject.transform.position + relativePivotPosition, Vector3.up);
+        // camera target
+        var cameraTarget = selectedObjectPosition + relativePivotPosition;
+        _selectedObjectCamera.transform.LookAt(cameraTarget - cameraVerticalOffset, Vector3.up);
+
+        // camera-view obstacle detection
+        var raycastDirectionVector = _selectedObjectCamera.transform.position - cameraTarget;
+        RaycastHit hit;
+        // Debug.DrawRay(cameraTarget, raycastDirectionVector * 10, Color.yellow);
+        if (Physics.Raycast(cameraTarget, raycastDirectionVector, out hit, raycastDirectionVector.magnitude))
+        {
+            // TODO: Check, if this comparison works
+            if (hit.collider.gameObject != SelectedObject)  // Exclude selected object itself
+               _selectedObjectCamera.transform.localPosition = hit.point;
+            // TODO: Eventually the obstacle could not be rendered (e.g. if it's too close)
+        }
     }
 
     private void Update3dGrid()
     {
+        var localEulerAngles = transform.localEulerAngles;
         _3dGrid.transform.localEulerAngles = new Vector3(
-            transform.localEulerAngles.x,
-            -transform.localEulerAngles.y,
-            transform.localEulerAngles.z);
+            localEulerAngles.x,
+            -localEulerAngles.y,
+            localEulerAngles.z);
     }
 
     private void UpdateArrow()

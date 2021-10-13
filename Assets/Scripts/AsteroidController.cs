@@ -5,7 +5,6 @@ using UnityEditor;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-// TODO: Zcela odstranit vzorový asteroid ze scény - dá se vytvořit prefab (drag & drop z hierarchy view do assets) a použít ten?
 // TODO: Remove 'new Vector3' from code, use some predefined tmpVector
 
 public class AsteroidController : MonoBehaviour
@@ -36,12 +35,6 @@ public class AsteroidController : MonoBehaviour
         _particlesSaturnRing = GameObject.Find("ParticleSaturnRing");
         _particlesSaturnRingIce = GameObject.Find("ParticleSaturnRingIce");
         _selectionSprite = GameObject.Find("selectionSprite");
-    }
-
-    private void Update()
-    {
-        _particlesSaturnRing.transform.Rotate(new Vector3(0, 0, .0003f * Time.deltaTime));
-        _particlesSaturnRingIce.transform.Rotate(new Vector3(0, 0, .0002f * Time.deltaTime));
     }
 
     void FixedUpdate()
@@ -83,10 +76,11 @@ public class AsteroidController : MonoBehaviour
         _scale = Random.Range(.05f, .3f);
 
 
-        transform.SetPositionAndRotation(new Vector3(_x, _y, _z), _rotation);
+        Transform thisTransform;
+        (thisTransform = transform).SetPositionAndRotation(new Vector3(_x, _y, _z), _rotation);
         // transform.position = new Vector3(_x, _y, _z);  // TODO: Make them more dense to y=0
         // transform.rotation = _rotation;  // TODO: Can be done in Instantiate()
-        transform.localScale = new Vector3(_scale, _scale, _scale);
+        thisTransform.localScale = new Vector3(_scale, _scale, _scale);
 
         // GetComponent<Rigidbody>().mass = Mathf.Pow(_scale, 3) * 100;
         GetComponent<Rigidbody>().mass = _scale * 300;
@@ -135,6 +129,9 @@ if (_distance == 0) return;
         // _rigidBody.AddRelativeTorque(_torque, ForceMode.VelocityChange);
 
         /* Další možnost: Každej by mohl mít svýho parenta, kterej by s ním točil = obdobnej přístup jako ten úplně původní (vyzkoušeno, výkonově nepomohlo) */
+        
+        _particlesSaturnRing.transform.Rotate(new Vector3(0, 0, .0003f * Time.fixedDeltaTime));
+        _particlesSaturnRingIce.transform.Rotate(new Vector3(0, 0, .0002f * Time.fixedDeltaTime));
     }
 
     public static void CollidedAsteroid()

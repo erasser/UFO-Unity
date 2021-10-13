@@ -22,7 +22,7 @@ public class Ufo : MonoBehaviour
     private Vector3 _initialCameraUfoLocalPosition;
     private GameObject _topCamera;
     private float _timeInterval;
-    public bool _isAutoLeveling;  // TODO: Just _autoLevelingTime or _fromTransform could be used
+    [SerializeField] private bool _isAutoLeveling;  // TODO: Just _autoLevelingTime or _fromTransform could be used
     private float _autoLevelingTime;
     private Quaternion _fromUfoQuaternion;
     private static GameObject _laser;
@@ -54,7 +54,7 @@ public class Ufo : MonoBehaviour
         //     var rb = child.gameObject.GetComponent<Rigidbody>();
         //     rb.isKinematic = true;
         //     child.gameObject.AddComponent<BoxCollider>();
-        //     child.gameObject.isStatic = true; 
+        //     child.gameObject.isStatic = true;  // isStatic nikdy nepoužívat na nic!! Smysl to má jen v editoru, ale i tam mi to kurví život!
         // }
 
         // _forceBeam.GetComponent<CapsuleCollider>().enabled = false;
@@ -72,10 +72,7 @@ public class Ufo : MonoBehaviour
             var drag = _rigidBody.drag;
             _rigidBody.useGravity = !_rigidBody.useGravity;
 
-            if (_rigidBody.useGravity)
-                _rigidBody.drag = .5f;
-            else
-                _rigidBody.drag = drag;
+            _rigidBody.drag = _rigidBody.useGravity ? .5f : drag;
         }
 
         if (Input.GetKey(KeyCode.T)) // TODO: Remove
@@ -126,21 +123,24 @@ public class Ufo : MonoBehaviour
         // Debug.DrawRay(_jet.transform.position, _jet.transform.TransformDirection (Vector3.forward) * 20, Color.magenta);
     }
 
-    public void MoveUfo(Joystick joystickHorizontalPlane, Joystick joystickVerticalPlane)
-    {   
+    public void MoveUfo(Joystick joystickHorizontalPlane = null, Joystick joystickVerticalPlane = null)
+    {
         /*******  JOYSTICK MOVEMENT & ROTATION  *******/
-        if (joystickHorizontalPlane.Direction.magnitude > 0 || joystickVerticalPlane.Direction.magnitude > 0)
+        if (joystickHorizontalPlane)
         {
             _rotationChange.y = 30 * Time.fixedDeltaTime * joystickHorizontalPlane.Direction.x;
-
             _velocityChange.z = 120 * Time.fixedDeltaTime * joystickHorizontalPlane.Direction.y;
-            _velocityChange.x = 40 * Time.fixedDeltaTime * joystickVerticalPlane.Direction.x;
-            _velocityChange.y = 40 * Time.fixedDeltaTime * joystickVerticalPlane.Direction.y;
-
-            goto DoTransform;
         }
 
-        /*******  KEY MOVEMENT  *******/
+        if (joystickVerticalPlane)
+        {
+            _velocityChange.x = 40 * Time.fixedDeltaTime * joystickVerticalPlane.Direction.x;
+            _velocityChange.y = 40 * Time.fixedDeltaTime * joystickVerticalPlane.Direction.y;
+        }
+
+        if (joystickHorizontalPlane || joystickVerticalPlane)
+            goto DoTransform;
+
         if (Input.GetKey(KeyCode.LeftShift))  // Move Time.fixedDeltaTime here?
         {
             _velocityCoefficient.Set(60, 40, 300);
@@ -152,6 +152,7 @@ public class Ufo : MonoBehaviour
             _rotationCoefficient = 15;
         }
 
+        /*******  KEY MOVEMENT  *******/
         if (Input.GetKey(KeyCode.Space))  // Accelerate depending of key pressed
             _velocityChange.y = Time.fixedDeltaTime * _velocityCoefficient.y;
         else if (Input.GetKey(KeyCode.LeftControl))
@@ -173,9 +174,6 @@ public class Ufo : MonoBehaviour
         if (Input.GetKey(KeyCode.Q) == Input.GetKey(KeyCode.E))
             _velocityChange.x = 0;
 
-        if (_velocityChange.magnitude > 0)
-            _rigidBody.AddRelativeForce(_velocityChange, ForceMode.VelocityChange);
-
         /*******  KEY ROTATION  *******/
         if (Input.GetKey(KeyCode.A))
             _rotationChange.y = - Time.fixedDeltaTime * _rotationCoefficient;
@@ -186,14 +184,14 @@ public class Ufo : MonoBehaviour
 
         DoTransform:
 
-        if (transform.position.y < 10 && _velocityChange.y < 0)
+        if (transform.localPosition.y < 10 && _velocityChange.y < 0)
             // _velocityChange.y /= (11 - transform.position.y) * 10;
-            _velocityChange.y = - Mathf.Sqrt(transform.position.y / 3.75f);  // TODOO ----------- Udělat pořádně + vyřešit i nad jinými objekt než nad zemí (Raycast, SphereCast)
+            _velocityChange.y = - Mathf.Sqrt(transform.localPosition.y / 3.75f);  // TODOO ----------- Udělat pořádně + vyřešit i nad jinými objekt než nad zemí (Raycast, SphereCast), obejít se bez odmocniny
 
-        if (_velocityChange.magnitude > 0)
+        if (_velocityChange.x != 0 || _velocityChange.y != 0 || _velocityChange.z != 0)
             _rigidBody.AddRelativeForce(_velocityChange, ForceMode.VelocityChange);
             
-        if (_rotationChange.magnitude > 0)
+        if (_rotationChange.x != 0 || _rotationChange.y != 0 || _rotationChange.z != 0)
             _rigidBody.AddRelativeTorque(_rotationChange, ForceMode.VelocityChange);
 
         // _arrowHelper.transform.rotation = Quaternion.LookRotation(_rigidBody.velocity.normalized);
@@ -292,8 +290,10 @@ public class Ufo : MonoBehaviour
         if (!_topCamera) return;
 
         // Stačilo by dát jí jako child k UFO, ne?
-        _topCamera.transform.position = new Vector3(transform.position.x, transform.position.y + 16, transform.position.z);
-        _topCamera.transform.eulerAngles = new Vector3(90, transform.eulerAngles.y, 0);
+        var cameraTransform = transform;
+        var localPosition = cameraTransform.localPosition;
+        _topCamera.transform.localPosition = new Vector3(localPosition.x, localPosition.y + 16, localPosition.z);
+        _topCamera.transform.eulerAngles = new Vector3(90, cameraTransform.eulerAngles.y, 0);
         
         // UpdateVectorComponent(ref _topCamera.transform.position, "y", 16);  // Hm, takže nic :D
     }
@@ -405,7 +405,7 @@ public class Ufo : MonoBehaviour
         _launched = true;
         
         var newRocket = Instantiate(rocket);
-        newRocket.transform.position = transform.position;
+        newRocket.transform.localPosition = transform.localPosition;
         newRocket.transform.Translate(Vector3.down);
         newRocket.GetComponent<MissileSupervisor>().m_guidanceSettings.m_target = GameController.SelectedObject;
         _gameControllerInstance.SelectObject(newRocket);

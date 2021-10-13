@@ -62,6 +62,12 @@ object jitters when moving                                      Transform it in 
 • Area 51 (escape? attack? stealth?)
 • underwater
 
+ optimization
+══════════════
+• Avoid Vector.magnitude, Vector distance (it uses sqrt)
+• Avoid many .transform calls, use Vector3 variables
+• Use .localPosition instead of .position if possible 
+
  physics
 ═════════
 ////   Force	        Add a continuous force to the rigidbody, using its mass.                \\\\
