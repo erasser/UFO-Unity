@@ -67,6 +67,7 @@ object jitters when moving                                      Transform it in 
 • Avoid Vector.magnitude, Vector distance (it uses sqrt)
 • Avoid many .transform calls, use Vector3 variables
 • Use .localPosition instead of .position if possible 
+• object pooling (use for rockets etc.)
 
  physics
 ═════════

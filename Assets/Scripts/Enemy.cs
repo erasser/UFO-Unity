@@ -1,37 +1,32 @@
+using System;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
+    // private GameController _gameControllerScript;
     private Rigidbody _rigidBody;
-    private float _hull = 100;
+    public int hull;
     
     void Start()
     {
+        // _gameControllerScript = GameObject.Find("GameController").GetComponent<GameController>();
         _rigidBody = GetComponent<Rigidbody>();
+
+        if (hull == 0)
+            throw new Exception("This enemy has not assigned hull value!");
     }
 
     void FixedUpdate()
     {
-        // transform.Translate(Vector3.forward / 16);
         _rigidBody.transform.Translate(Vector3.forward / 10);
     }
 
-    public void GetDamage()
+    public void GetDamage(int damage)
     {
-        _hull -= 50;
-
-        // if (_hull <= 0)
-        //     DestroyMe();
-    }
-
-    private void DestroyMe()
-    {
-        // UfoController.SelectNone();
-        // Destroy(this);
-    }
-
-    public void OnCollisionEnter(Collision other)  // TODO: Rather do this by rocket MissileSupervisor.interceptEvent
-    {
-        print(other.collider.tag);
+        print("I am hit");
+        hull -= damage;
+        
+        if (hull <= 0)
+            Destroy(gameObject);
     }
 }

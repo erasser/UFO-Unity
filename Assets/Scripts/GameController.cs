@@ -26,6 +26,7 @@ public class GameController : MonoBehaviour
     private Ufo _ufoInstance;
     private GameObject _selectionSpriteInstance;
     public static Vector2 SelectedObjectCameraFOV;  // .x = horizontal FOV, .y = vertical FOV
+    public static GameObject MissileSupervisorTargetPrefab;  // It's just invisible dummy
 
     void Start()
     {
@@ -79,6 +80,9 @@ public class GameController : MonoBehaviour
             Input.GetKey(KeyCode.LeftShift))
             
             _ufoInstance.MoveUfo();
+        
+        if (Input.GetKey(KeyCode.X))
+            _ufoInstance.FireRocket();
     }
 
     private void ProcessTouchEvent()
@@ -152,13 +156,13 @@ public class GameController : MonoBehaviour
         if (!SelectedObject) return;
 
         var relativePivotPosition = SelectedObjectMustCenterPivot ? new Vector3(0, _selectedObjectScript.verticalExtents, 0) : Vector3.zero;
-        var cameraVerticalOffset = new Vector3(0, 1, 0);  // The higher is the camera, the lower is the camera target
+        var cameraVerticalOffset = new Vector3(0, _selectedObjectScript.verticalExtents / 8, 0);  // The higher is the camera, the lower is the camera target
 
         // camera position
         var selectedObjectPosition = SelectedObject.transform.position;
         _selectedObjectCamera.transform.position = selectedObjectPosition + new Vector3(
             Mathf.Cos(Time.time / 4) * _selectedObjectScript.cameraDistance,  // there was .boundingSphereRadius * 2
-            _selectedObjectScript.verticalExtents,  // there was + 4
+            _selectedObjectScript.verticalExtents,
             Mathf.Sin(Time.time / 4) * _selectedObjectScript.cameraDistance) + relativePivotPosition + cameraVerticalOffset;
 
         // camera target

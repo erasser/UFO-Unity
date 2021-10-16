@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class SelectedObjectDynamic : MonoBehaviour
 {
-    private GameController _gameControllerInstance;
+    private GameController _gameControllerScript;
     public float boundingSphereRadius;
     public float verticalExtents;
     public float horizontalToVerticalSizeRatio;
@@ -14,14 +14,15 @@ public class SelectedObjectDynamic : MonoBehaviour
     private void Awake()
     {
         CalculateBoundingSphereRadius();  // This is needed to be in Awake()
+        _gameControllerScript = GameObject.Find("GameController").GetComponent<GameController>();
     }
 
     private void OnDestroy()
     {
-        _gameControllerInstance.SelectNone();
+        _gameControllerScript.SelectNone();
     }
 
-    private void CalculateBoundingSphereRadius()
+    private void CalculateBoundingSphereRadius()  // .extents is half of bounds
     {
         var mesh = GetComponent<MeshFilter>().sharedMesh;
 
@@ -35,9 +36,11 @@ public class SelectedObjectDynamic : MonoBehaviour
             verticalExtents,
             mesh.bounds.extents.z * lossyScale.z);
 
-        horizontalToVerticalSizeRatio = Mathf.Max(
-            mesh.bounds.extents.x * lossyScale.x,
-            mesh.bounds.extents.z * lossyScale.z) / verticalExtents;
+        // horizontalToVerticalSizeRatio = Mathf.Max(  // Use horizontalDiameter if I use this
+        //     mesh.bounds.extents.x * lossyScale.x,
+        //     mesh.bounds.extents.z * lossyScale.z) / verticalExtents;
+
+        var horizontalDiameter = Mathf.Sqrt(mesh.bounds.extents.x * lossyScale.x * mesh.bounds.extents.z * lossyScale.z);
 
         /*  Real bounding sphere, but it's too big :(  */
         // Mathf.Sqrt(Mathf.Pow(mesh.bounds.extents.x, 2) +
@@ -46,11 +49,9 @@ public class SelectedObjectDynamic : MonoBehaviour
 
         // https://stackoverflow.com/questions/14614252/how-to-fit-camera-to-object
         var tg = Mathf.Tan(GameController.SelectedObjectCameraFOV.y * .0087266f);  // .0087266 = 1/(2*57.3) (2 is from formula, 57.3 is deg->rad conversion)
-        var cameraDistanceFromHeight = verticalExtents * 2 / tg;
-        var cameraDistanceFromWidth = Mathf.Max(
-            mesh.bounds.extents.x * lossyScale.x,
-            mesh.bounds.extents.z * lossyScale.z) * 2 / tg;
 
-        cameraDistance = Mathf.Max(cameraDistanceFromHeight, cameraDistanceFromWidth) * .7f;
+        // var ratio = horizontalDiameter / (verticalExtents * 2);
+
+        cameraDistance = Mathf.Max(verticalExtents / tg, horizontalDiameter / tg) * 1.4f;
     }
 }

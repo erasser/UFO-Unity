@@ -118,6 +118,8 @@ public readonly struct Quest
 
     private void ShowTextDynamically()
     {
+        // https://learn.unity.com/tutorial/invoke-2d#5c8a6da9edbc2a067d4752d0
+        // WaitForSeconds
         //QuestText.text += "";
     }
 }

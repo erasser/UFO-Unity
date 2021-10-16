@@ -28,7 +28,6 @@ public class Ufo : MonoBehaviour
     private static GameObject _laser;
     private GameObject _laserLight;
     public GameObject rocket;
-    private static bool _launched;
     private GameController _gameControllerInstance;
 
     void Start()
@@ -78,11 +77,6 @@ public class Ufo : MonoBehaviour
         if (Input.GetKey(KeyCode.T)) // TODO: Remove
         {
             _rigidBody.rotation = Quaternion.Euler(45, 0, 80);
-        }
-
-        if (Input.GetKey(KeyCode.X))
-        {
-            FireRocket();
         }
 
         if (Input.GetKey(KeyCode.R))  // auto level
@@ -398,18 +392,37 @@ public class Ufo : MonoBehaviour
             Quest.Complete();
     }
 
-    private void FireRocket()
+    public void FireRocket()
     {
-        if (_launched) return;  // solves firing burst of rockets on one keypress
+        if (!Projectile.CanBeShot())
+            return;
 
-        _launched = true;
-        
+        SetWeaponTarget();
+    }
+
+    private void SetWeaponTarget()
+    {
+        var targetTransform = transform;
+        GameObject target;
+        if (GameController.SelectedObject)
+            target = GameController.SelectedObject;
+        else
+        {
+            target = new GameObject("DummyTarget");
+            target.transform.position = targetTransform.position + 1000 * targetTransform.forward;
+            GameController.SelectedObject = target;
+        }
+
         var newRocket = Instantiate(rocket);
+        var missileSupervisor = newRocket.GetComponent<MissileSupervisor>();
+
         newRocket.transform.localPosition = transform.localPosition;
         newRocket.transform.Translate(Vector3.down);
-        newRocket.GetComponent<MissileSupervisor>().m_guidanceSettings.m_target = GameController.SelectedObject;
+        missileSupervisor.m_guidanceSettings.m_target = target;
+        missileSupervisor.m_launchCustomDir = targetTransform.forward;
+        missileSupervisor.StartLaunchSequence();
         _gameControllerInstance.SelectObject(newRocket);
-        newRocket.GetComponent<MissileSupervisor>().StartLaunchSequence();
+       
     }
 
 }
