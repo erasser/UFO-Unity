@@ -14,7 +14,7 @@ public class Projectile : MonoBehaviour
     {
         _gameControllerInstance = GameObject.Find("GameController").GetComponent<GameController>();
         _lastShotTime = _shootTime = Time.time;
-        InvokeRepeating ("CheckLifespan", 0, 1);  // seconds
+        InvokeRepeating(nameof(CheckLifespan), 0, 1);  // seconds
     }
     
     public void OnCollisionEnter(Collision other)

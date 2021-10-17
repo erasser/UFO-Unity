@@ -1,10 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Timers;
-using Unity.VisualScripting.FullSerializer;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
-using UnityEngine.UI;
 
 public readonly struct Quest
 {
@@ -23,11 +18,8 @@ public readonly struct Quest
     public static Quest Current;
     // private static readonly Quest[] MainQuests;
     // List<int> termsList = new List<int>();
-
     private static readonly List<Quest> MainQuests = new List<Quest>();
-
-    private static string _questText;  // Text to be shown in UI
-    private static readonly Text QuestText;
+    // private readonly GameObject _ui;
 
     public static void Init()
     {
@@ -77,7 +69,8 @@ public readonly struct Quest
             "Fuck off."/*,
             new Vector3( 0, 0, 0)*/));
 
-        QuestText = GameObject.Find("questText").GetComponent<Text>();
+        // _ui =
+        
         Next();
     }
 
@@ -105,21 +98,15 @@ public readonly struct Quest
     private static void ShowCurrent()  // https://docs.unity3d.com/Packages/com.unity.ugui@1.0/manual/StyledText.html
     {
         Current.QuestTarget.SetActive(true);
-        
-        // ▶▷▸▹▻◆◈◇
-        QuestText.text = "◈ <b>" + Current._name + "</b>" +
-                     "\n   " + new string('-', Current._name.Length) + "\n" +
-                     Current._description;
 
-        // ShowTextDynamically();  // TODO: Buď postupně zobrazit po znacích, nebo spíš zobrazit hned všechny znaky, ale probordelené a vybordelit z nich správný text.
+        // ▶▷▸▹▻◆◈◇
+        UI.ShowQuestText
+        (
+            "◈ <b>" + Current._name + "</b>" +
+            "\n   " + new string('-', Current._name.Length) + "\n" +
+            Current._description
+        );
 
         // TargetLocationMarker.transform.position = quest._questTarget;
-    }
-
-    private void ShowTextDynamically()
-    {
-        // https://learn.unity.com/tutorial/invoke-2d#5c8a6da9edbc2a067d4752d0
-        // WaitForSeconds
-        //QuestText.text += "";
     }
 }

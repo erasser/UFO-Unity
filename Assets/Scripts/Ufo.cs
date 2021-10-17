@@ -94,13 +94,13 @@ public class Ufo : MonoBehaviour
             ), ForceMode.VelocityChange);*/ // TODO: Try replacing with RotateLocal to remove inertia
         }
 
-        // if (Input.GetKeyDown(KeyCode.F))  // switch force field
-        // {
-        //     _forceBeamEnabled = !_forceBeamEnabled;
-        //     _forceBeam.SetActive(_forceBeamEnabled);
-        //
-        //     _ufoCamera.transform.Rotate(_forceBeamEnabled ? new Vector3(10, 0, 0) : new Vector3(-10, 0, 0));
-        // }
+        if (Input.GetKeyDown(KeyCode.F))  // switch force field
+        {
+            _forceBeamEnabled = !_forceBeamEnabled;
+            _forceBeam.SetActive(_forceBeamEnabled);
+        
+            // _ufoCamera.transform.Rotate(_forceBeamEnabled ? new Vector3(10, 0, 0) : new Vector3(-10, 0, 0));
+        }
     }
     
     void FixedUpdate()

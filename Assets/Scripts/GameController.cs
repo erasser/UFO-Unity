@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using SparseDesign.ControlledFlight;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -229,6 +230,9 @@ public class GameController : MonoBehaviour
             tar.gameObject.transform.position = projectileTransform.position + 400 * projectileTransform.forward;
         }*/
 
+        /***  If object is a rocket, destroy also its missileSupervisorTarget */
+        if (objTransform.CompareTag("rocket"))
+            Destroy(obj.GetComponent<MissileSupervisor>().m_guidanceSettings.m_target);
 
         Destroy(obj.gameObject);
     }
