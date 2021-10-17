@@ -27,7 +27,7 @@ public class Ufo : MonoBehaviour
     private Quaternion _fromUfoQuaternion;
     private static GameObject _laser;
     private GameObject _laserLight;
-    public GameObject rocket;
+    public GameObject rocketPrefab;
     private GameController _gameControllerInstance;
 
     void Start()
@@ -397,32 +397,34 @@ public class Ufo : MonoBehaviour
         if (!Projectile.CanBeShot())
             return;
 
-        SetWeaponTarget();
-    }
-
-    private void SetWeaponTarget()
-    {
-        var targetTransform = transform;
-        GameObject target;
-        if (GameController.SelectedObject)
-            target = GameController.SelectedObject;
-        else
-        {
-            target = new GameObject("DummyTarget");
-            target.transform.position = targetTransform.position + 1000 * targetTransform.forward;
-            GameController.SelectedObject = target;
-        }
-
-        var newRocket = Instantiate(rocket);
+        var newRocket = Instantiate(rocketPrefab);
         var missileSupervisor = newRocket.GetComponent<MissileSupervisor>();
 
         newRocket.transform.localPosition = transform.localPosition;
         newRocket.transform.Translate(Vector3.down);
-        missileSupervisor.m_guidanceSettings.m_target = target;
-        missileSupervisor.m_launchCustomDir = targetTransform.forward;
+        missileSupervisor.m_guidanceSettings.m_target = SetWeaponTarget(missileSupervisor);
+        missileSupervisor.m_launchCustomDir = transform.forward;
         missileSupervisor.StartLaunchSequence();
-        _gameControllerInstance.SelectObject(newRocket);
-       
+
+        // _gameControllerInstance.SelectObject(newRocket);
+    }
+
+    /// <param name="missileSupervisor">Used to pair missileSupervisor and its target both ways</param> 
+    private GameObject SetWeaponTarget(MissileSupervisor missileSupervisor)
+    {
+        var target = Instantiate(_gameControllerInstance.missileSupervisorTargetPrefab);
+        target.GetComponent<MissileSupervisorTarget>().missileSupervisor = missileSupervisor;
+        var thisTransform = transform;
+
+        if (GameController.SelectedObject)
+        {
+            target.transform.SetParent(GameController.SelectedObject.transform);
+            target.transform.localPosition = Vector3.zero;
+        }
+        else
+            target.transform.position = thisTransform.position + 10000 * thisTransform.forward;
+
+        return target;
     }
 
 }

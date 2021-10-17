@@ -1,31 +1,35 @@
 using UnityEngine;
 
+/// Opodmínkovat TrailRenderer, pokud se bude používat s něčím bez trailu!
+
 public class Projectile : MonoBehaviour
 {
-    // private GameController _gameControllerScript;
+    private GameController _gameControllerInstance;
+    private static float _lifespan = 30;        // lifespan (s)
     private static float _rocketsDelay = .5f;   // Delay until next projectile can be fired (s)
     private static float _lastShotTime;         // Time of last shot projectile
     private float _shootTime;                   // Time, when this projectile was shot
 
     void Start()
     {
-        // _gameControllerScript = GameObject.Find("GameController").GetComponent<GameController>();
+        _gameControllerInstance = GameObject.Find("GameController").GetComponent<GameController>();
         _lastShotTime = _shootTime = Time.time;
         InvokeRepeating ("CheckLifespan", 0, 1);  // seconds
     }
     
     public void OnCollisionEnter(Collision other)
     {
-        other.collider.gameObject.GetComponent<Enemy>()?.GetDamage(50);
-
-        Destroy(gameObject);  // must be at the end
+        other.collider.gameObject.GetComponent<Enemy>()?.GetDamage(50);  // OnCollisionEnter
+        _gameControllerInstance.DestroyGameObject(gameObject);  // must be at the end of this method
     }
 
-    private void CheckLifespan()
+    private void CheckLifespan()  // There is also 'limit flight time' in missileSupervisor - just stops tracking, flight continues
     {
-        print (Time.time);
-        if (Time.time - _shootTime > 10) // lifespan is hardcoded now and the same for all types of projectiles
-            Destroy(gameObject);
+        if (Time.time - _shootTime > 10)
+            gameObject.GetComponent<TrailRenderer>().enabled = false;
+        
+        if (Time.time - _shootTime > _lifespan)
+            _gameControllerInstance.DestroyGameObject(gameObject);
     }
 
     public static bool CanBeShot()

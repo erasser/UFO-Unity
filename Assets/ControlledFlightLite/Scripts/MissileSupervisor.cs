@@ -26,6 +26,14 @@ namespace SparseDesign
             }
 
             /// <summary>
+            /// Continue Flight without tracking target
+            /// </summary>
+            public void SetDone()
+            {
+                m_phase = PhaseEnum.DONE;
+            }
+
+            /// <summary>
             /// Enum for state of intercept
             /// </summary>
             enum InterceptEnum

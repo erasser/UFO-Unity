@@ -68,6 +68,7 @@ object jitters when moving                                      Transform it in 
 • Avoid many .transform calls, use Vector3 variables
 • Use .localPosition instead of .position if possible 
 • object pooling (use for rockets etc.)
+• What's not visible to camera (renderer.isVisible), need not to be updated (I presume, with an excteption to physical objects)
 
  physics
 ═════════

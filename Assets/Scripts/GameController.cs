@@ -1,9 +1,10 @@
 using System;
-using Unity.VisualScripting;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-// ►  All fields and methods should be static
+
+/// Could use singleton for this
 
 public class GameController : MonoBehaviour
 {
@@ -26,7 +27,7 @@ public class GameController : MonoBehaviour
     private Ufo _ufoInstance;
     private GameObject _selectionSpriteInstance;
     public static Vector2 SelectedObjectCameraFOV;  // .x = horizontal FOV, .y = vertical FOV
-    public static GameObject MissileSupervisorTargetPrefab;  // It's just invisible dummy
+    public GameObject missileSupervisorTargetPrefab;  // It's just invisible dummy
 
     void Start()
     {
@@ -80,9 +81,13 @@ public class GameController : MonoBehaviour
             Input.GetKey(KeyCode.LeftShift))
             
             _ufoInstance.MoveUfo();
-        
-        if (Input.GetKey(KeyCode.X))
+
+        if (Input.GetKey(KeyCode.X) || Input.GetMouseButtonDown(1)) // RMB
             _ufoInstance.FireRocket();
+
+        if (Input.GetKey(KeyCode.Y))
+            ChangeTargetsDebug();
+
     }
 
     private void ProcessTouchEvent()
@@ -196,6 +201,53 @@ public class GameController : MonoBehaviour
         if (!Quest.Current.QuestTarget)
             return;
         _arrow.transform.LookAt(Quest.Current.QuestTarget.transform);
+    }
+
+    // Manages destroying objects at one place, so OnDestroy() on every fucking object is not necessary.
+    public void DestroyGameObject(GameObject obj)
+    {
+        /***  If object is selected, unselect it (does not solve selected children, but it's not needed now). */
+        if (obj == SelectedObject)
+            SelectNone();
+
+        /***  If object is a target (i.e. has attached a missileSupervisorTarget), let projectiles continue in their actual direction. */
+        var objTransform = obj.transform;
+        foreach (Transform t in objTransform)
+        {
+            if (t.CompareTag("missileSupervisorTarget"))
+            {
+                t.gameObject.GetComponent<MissileSupervisorTarget>().missileSupervisor.SetDone();
+            }
+        }
+        /*foreach (GameObject tar in targets)
+        {
+            // target ↓               script ↓      relevant missileSupervisor ↓    rocket ↓
+            var projectile = tar.gameObject.GetComponent<MissileSupervisorTarget>().missileSupervisor.gameObject;
+            tar.gameObject.transform.parent = null;
+            var projectileTransform = projectile.GetComponent<Rigidbody>().transform;  // TODO: Remove rigid body when it works
+            var vec = objTransform.position - projectileTransform.position;
+            tar.gameObject.transform.position = projectileTransform.position + 400 * projectileTransform.forward;
+        }*/
+
+
+        Destroy(obj.gameObject);
+    }
+
+    public void ChangeTargetsDebug()
+    {
+        var objTransform = GameObject.Find("jet").transform;
+
+        // var targets = new List<GameObject>();
+        foreach (Transform t in objTransform)
+        {
+            if (t.CompareTag("missileSupervisorTarget"))
+            {
+                // target ↓               script ↓      relevant missileSupervisor ↓    rocket ↓
+                var projectile = t.gameObject.GetComponent<MissileSupervisorTarget>().missileSupervisor.gameObject;
+                t.gameObject.transform.parent = null;
+                t.gameObject.transform.position = Vector3.zero;
+            }
+        }
     }
     
     private static float SignedSqrt(float number)

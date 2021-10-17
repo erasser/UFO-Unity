@@ -17,10 +17,11 @@ public class SelectedObjectDynamic : MonoBehaviour
         _gameControllerScript = GameObject.Find("GameController").GetComponent<GameController>();
     }
 
-    private void OnDestroy()
-    {
-        _gameControllerScript.SelectNone();
-    }
+    /// Moved To GameController
+    // private void OnDestroy()
+    // {
+    //     _gameControllerScript.SelectNone();
+    // }
 
     private void CalculateBoundingSphereRadius()  // .extents is half of bounds
     {

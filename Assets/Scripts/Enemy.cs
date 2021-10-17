@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
-    // private GameController _gameControllerScript;
+    private GameController _gameControllerScript;
     private Rigidbody _rigidBody;
     public int hull;
     
@@ -11,6 +11,7 @@ public class Enemy : MonoBehaviour
     {
         // _gameControllerScript = GameObject.Find("GameController").GetComponent<GameController>();
         _rigidBody = GetComponent<Rigidbody>();
+        _gameControllerScript = GameObject.Find("GameController").GetComponent<GameController>();
 
         if (hull == 0)
             throw new Exception("This enemy has not assigned hull value!");
@@ -23,10 +24,10 @@ public class Enemy : MonoBehaviour
 
     public void GetDamage(int damage)
     {
-        print("I am hit");
+        // print(name + " takes " + damage + " damage!");
         hull -= damage;
         
         if (hull <= 0)
-            Destroy(gameObject);
+            _gameControllerScript.DestroyGameObject(gameObject);
     }
 }
