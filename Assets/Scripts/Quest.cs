@@ -100,12 +100,7 @@ public readonly struct Quest
         Current.QuestTarget.SetActive(true);
 
         // ▶▷▸▹▻◆◈◇
-        UI.ShowQuestText
-        (
-            "◈ <b>" + Current._name + "</b>" +
-            "\n   " + new string('-', Current._name.Length) + "\n" +
-            Current._description
-        );
+        UI.ShowQuestText(Current._name, Current._description);
 
         // TargetLocationMarker.transform.position = quest._questTarget;
     }

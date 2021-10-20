@@ -19,6 +19,7 @@ object jitters when moving                                      Transform it in 
 ► Implement bounding sphere!
 ► Zvážit toon grafiku
 ► Implementovat přitahování a vrhání objektů
+• Něco by se mohlo budovat
 • USE 'MOBILE' SHADERS! And use Mobile template when creating new project!
 • ZKUSIT ASTEROIDY I S FYZIKOU POMOCÍ PARTICLES!
 ••• Neni tam náhodou stále ten defaultní Skybox (nebo jak se to jmenuje?) Ukázal se při buildu
