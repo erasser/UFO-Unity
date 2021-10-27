@@ -28,8 +28,19 @@ public class Ufo : MonoBehaviour
     private static GameObject _laser;
     private GameObject _laserLight;
     public GameObject rocketPrefab;
-    private GameController _gameControllerInstance;
+    private GameController _gameControllerScript;
+    public static Ufo Script;
+    // public static GameObject ufo;
+    public GameObject arrow;
 
+    void Awake()
+    {
+        // ufo = Instantiate(_gameControllerScript.ufoPrefab);
+        Script = GetComponent<Ufo>();
+        arrow = transform.Find("arrow").gameObject;
+       
+    }
+    
     void Start()
     {
         Application.targetFrameRate = 666;
@@ -42,7 +53,7 @@ public class Ufo : MonoBehaviour
         _laserLight = GameObject.Find("laserLight");
         _laser.SetActive(false);
         _laserLight.SetActive(false);
-        _gameControllerInstance = GameObject.Find("GameController").transform.GetComponent<GameController>();
+        _gameControllerScript = GameObject.Find("GameController").transform.GetComponent<GameController>();
 
         if (UfoCamera != null)
             _initialCameraUfoLocalPosition = UfoCamera.transform.localPosition;  // It's set in editor
@@ -392,39 +403,6 @@ public class Ufo : MonoBehaviour
             Quest.Complete();
     }
 
-    public void FireRocket()
-    {
-        if (!Projectile.CanBeShot())
-            return;
 
-        var newRocket = Instantiate(rocketPrefab);
-        var missileSupervisor = newRocket.GetComponent<MissileSupervisor>();
-
-        newRocket.transform.localPosition = transform.localPosition;
-        newRocket.transform.Translate(Vector3.down);
-        missileSupervisor.m_guidanceSettings.m_target = SetWeaponTarget(missileSupervisor);
-        missileSupervisor.m_launchCustomDir = transform.forward;
-        missileSupervisor.StartLaunchSequence();
-
-        // _gameControllerInstance.SelectObject(newRocket);
-    }
-
-    /// <param name="missileSupervisor">Used to pair missileSupervisor and its target both ways</param> 
-    private GameObject SetWeaponTarget(MissileSupervisor missileSupervisor)
-    {
-        var target = Instantiate(_gameControllerInstance.missileSupervisorTargetPrefab);
-        target.GetComponent<MissileSupervisorTarget>().missileSupervisor = missileSupervisor;
-        var thisTransform = transform;
-
-        if (GameController.SelectedObject)
-        {
-            target.transform.SetParent(GameController.SelectedObject.transform);
-            target.transform.localPosition = Vector3.zero;
-        }
-        else
-            target.transform.position = thisTransform.position + 10000 * thisTransform.forward;
-
-        return target;
-    }
 
 }

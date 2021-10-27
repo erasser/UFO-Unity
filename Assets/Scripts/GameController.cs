@@ -25,25 +25,33 @@ public class GameController : MonoBehaviour
     private static Text _selectedObjectCameraText; // UI element
     public static bool SelectedObjectMustCenterPivot; // Buildings have pivot at bottom => pivot must be centered for camera rotation.  
     private GameObject _3dGrid;
-    private Ufo _ufoInstance;
+    public GameObject ufoPrefab;
+    // public Ufo ufoScript;
     private GameObject _selectionSpriteInstance;
     public static Vector2 SelectedObjectCameraFOV;  // .x = horizontal FOV, .y = vertical FOV
     public GameObject missileSupervisorTargetPrefab;  // It's just invisible dummy
+    private GameObject _enemy;
+    public static GameController Script;
+    public static GameObject ufo;
+    
 
     void Start()
     {
         _infoText = GameObject.Find("InfoText").GetComponent<Text>();
         _arrow = GameObject.Find("arrow");
+        _enemy = GameObject.Find("jet");
         _laserButton = GameObject.Find("laserButton").GetComponent<Button>();
         _laserButton.onClick.AddListener(Ufo.ToggleLaser);
         _3dGrid = GameObject.Find("3d_grid_planes");
-        _ufoInstance = GameObject.Find("UFO").transform.GetComponent<Ufo>();            // Ufo.cs - allows me to call non-static method
+        // _ufoInstance = GameObject.Find("UFO").transform.GetComponent<Ufo>();            // Ufo.cs - allows me to call non-static method
         _selectionSpriteInstance = Instantiate(selectionSpritePrefab);
         _selectedObjectCamera = GameObject.Find("CameraSelectedObject");
         _selectedObjectCamera.SetActive(false);
         _selectedObjectCameraTexture = GameObject.Find("SelectedObjectCameraTexture");
         _selectedObjectCameraText = GameObject.Find("selectedObjectCameraText").GetComponent<Text>();
         _selectedObjectCameraTexture.SetActive(false);
+        Script = GetComponent<GameController>();
+        ufo = Instantiate(ufoPrefab);
 
         var vFOV = _selectedObjectCamera.GetComponent<Camera>().fieldOfView;
         SelectedObjectCameraFOV = new Vector2(Camera.VerticalToHorizontalFieldOfView(vFOV, 2), vFOV);
@@ -69,7 +77,7 @@ public class GameController : MonoBehaviour
         if (joystickHorizontalPlane.Direction.x != 0 || joystickHorizontalPlane.Direction.y != 0 ||
             joystickVerticalPlane.Direction.x != 0 || joystickVerticalPlane.Direction.y != 0)
             
-            _ufoInstance.MoveUfo(joystickHorizontalPlane, joystickVerticalPlane);
+            Ufo.Script.MoveUfo(joystickHorizontalPlane, joystickVerticalPlane);
 
         if (Input.GetKey(KeyCode.Space) ||
             Input.GetKey(KeyCode.LeftControl) ||
@@ -81,13 +89,18 @@ public class GameController : MonoBehaviour
             Input.GetKey(KeyCode.E) ||
             Input.GetKey(KeyCode.LeftShift))
             
-            _ufoInstance.MoveUfo();
+            Ufo.Script.MoveUfo();
 
-        if (Input.GetKey(KeyCode.X) || Input.GetMouseButtonDown(1)) // RMB
-            _ufoInstance.FireRocket();
+        if (Input.GetKey(KeyCode.X) /* || Input.GetMouseButtonDown(1)*/) // RMB
+            // _ufoInstance.FireRocket();
+            WeaponController.Script.FireRocket(Ufo.Script.gameObject);
+            
 
-        if (Input.GetKey(KeyCode.Y))
-            ChangeTargetsDebug();
+        // if (Input.GetKey(KeyCode.C))
+        //     _enemy.FireRocket();
+
+        // if (Input.GetKey(KeyCode.Y))
+        //     ChangeTargetsDebug();
 
     }
 
@@ -190,18 +203,19 @@ public class GameController : MonoBehaviour
 
     private void Update3dGrid()
     {
-        var localEulerAngles = transform.localEulerAngles;
-        _3dGrid.transform.localEulerAngles = new Vector3(
-            localEulerAngles.x,
-            -localEulerAngles.y,
-            localEulerAngles.z);
+    var localEulerAngles = ufo.transform.localEulerAngles;
+    // _3dGrid.transform.localEulerAngles = new Vector3(
+    //     localEulerAngles.x,
+    //     -localEulerAngles.y,
+    //     localEulerAngles.z);
     }
 
     private void UpdateArrow()
     {
         if (!Quest.Current.QuestTarget)
             return;
-        _arrow.transform.LookAt(Quest.Current.QuestTarget.transform);
+// print(Ufo.Script);
+//         Ufo.Script.gameObject.transform.LookAt(Quest.Current.QuestTarget.transform);
     }
 
     // Manages destroying objects at one place, so OnDestroy() on every fucking object is not necessary.
@@ -260,6 +274,7 @@ public class GameController : MonoBehaviour
         return Mathf.Sqrt(Math.Abs(number)) * Mathf.Sign(number);
     }
     
+   
     // TODO: Co zneužít přetěžování operátorů + extendnout třídu Vector3?
     // This is because they won't allow me to change individual Vector component
     // private static void UpdateVectorComponent(ref Vector3 vectorToUpdate, string component, float value)
