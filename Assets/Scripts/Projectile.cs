@@ -1,3 +1,4 @@
+using SparseDesign.ControlledFlight;
 using UnityEngine;
 
 /// Opodmínkovat TrailRenderer, pokud se bude používat s něčím bez trailu!
@@ -10,17 +11,28 @@ public class Projectile : MonoBehaviour
     private static float _lastShotTime;         // Time of last shot projectile
     private float _shootTime;                   // Time, when this projectile was shot
 
-    void Start()
+    void Awake()
     {
         _gameControllerInstance = GameObject.Find("GameController").GetComponent<GameController>();
+    }
+    
+    void Start()
+    {
         _lastShotTime = _shootTime = Time.time;
         InvokeRepeating(nameof(CheckLifespan), 0, 1);  // seconds
     }
     
+    // TODO: Triggeruje se 2×, když střílí enemy!
     public void OnCollisionEnter(Collision other)
     {
-        other.collider.gameObject.GetComponent<Enemy>()?.GetDamage(50);  // OnCollisionEnter
-        _gameControllerInstance.DestroyGameObject(gameObject);  // must be at the end of this method
+        other.collider.gameObject.GetComponent<Enemy>()?.GetDamage(50);
+        _gameControllerInstance.DestroyGameObject(gameObject);
+    }
+
+    // Ensures the projectile doesn't collide with the shooter itself
+    public void OnTriggerExit(Collider other)
+    {
+        GetComponent<BoxCollider>().isTrigger = false;
     }
 
     private void CheckLifespan()  // There is also 'limit flight time' in missileSupervisor - just stops tracking, flight continues

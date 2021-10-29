@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DigitalRuby.Tween;
 using SparseDesign.ControlledFlight;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -30,7 +31,7 @@ public class GameController : MonoBehaviour
     private GameObject _selectionSpriteInstance;
     public static Vector2 SelectedObjectCameraFOV;  // .x = horizontal FOV, .y = vertical FOV
     public GameObject missileSupervisorTargetPrefab;  // It's just invisible dummy
-    private GameObject _enemy;
+    public static GameObject Enemy;
     public static GameController Script;
     public static GameObject ufo;
     
@@ -39,7 +40,7 @@ public class GameController : MonoBehaviour
     {
         _infoText = GameObject.Find("InfoText").GetComponent<Text>();
         _arrow = GameObject.Find("arrow");
-        _enemy = GameObject.Find("jet");
+        Enemy = GameObject.Find("jet");
         _laserButton = GameObject.Find("laserButton").GetComponent<Button>();
         _laserButton.onClick.AddListener(Ufo.ToggleLaser);
         _3dGrid = GameObject.Find("3d_grid_planes");
@@ -74,9 +75,11 @@ public class GameController : MonoBehaviour
 
     private void ProcessControls()
     {
+        // _infoText.text = EventSystem.current.IsPointerOverGameObject() + ", " + EventSystem.current.IsPointerOverGameObject(0);
+
         if (joystickHorizontalPlane.Direction.x != 0 || joystickHorizontalPlane.Direction.y != 0 ||
-            joystickVerticalPlane.Direction.x != 0 || joystickVerticalPlane.Direction.y != 0)
-            
+            joystickVerticalPlane  .Direction.x != 0 || joystickVerticalPlane  .Direction.y != 0)
+
             Ufo.Script.MoveUfo(joystickHorizontalPlane, joystickVerticalPlane);
 
         if (Input.GetKey(KeyCode.Space) ||
@@ -88,41 +91,48 @@ public class GameController : MonoBehaviour
             Input.GetKey(KeyCode.Q) ||
             Input.GetKey(KeyCode.E) ||
             Input.GetKey(KeyCode.LeftShift))
-            
+
             Ufo.Script.MoveUfo();
 
-        if (Input.GetKey(KeyCode.X) /* || Input.GetMouseButtonDown(1)*/) // RMB
-            // _ufoInstance.FireRocket();
-            WeaponController.Script.FireRocket(Ufo.Script.gameObject);
-            
+        if (Input.GetKey(KeyCode.X)/* ||
+            Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Stationary && !EventSystem.current.IsPointerOverGameObject(0) && !Input.GetMouseButtonDown(0)*/)
+            // WeaponController.Script.FireRocket(global::Ufo.Script.gameObject);  //ha!
+            WeaponController.Script.FireRocket(ufo);
 
-        // if (Input.GetKey(KeyCode.C))
-        //     _enemy.FireRocket();
+        if (Input.GetKey(KeyCode.C))
+            WeaponController.Script.FireRocket(Enemy);
 
         // if (Input.GetKey(KeyCode.Y))
         //     ChangeTargetsDebug();
-
     }
 
     private void ProcessTouchEvent()
     {
         // TODO: Add selected object info
         // TODO: Use layers to avoid touching UI https://answers.unity.com/questions/132586/game-object-as-touch-trigger.html
-        if (!EventSystem.current.IsPointerOverGameObject() && (Input.GetMouseButtonDown(0) || Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began))
-        {
-            if (Physics.Raycast(Ufo.UfoCamera.GetComponent<Camera>().ScreenPointToRay(Input.mousePosition), out _selectionHit))
+
+        // IsPointerOverGameObject (i.e. actually EventSystem object):
+        //      I observed, that without an argument it's true when hovering UI on PC. With argument (0) it's true when touching UI on mobile.
+
+        #if UNITY_EDITOR
+            if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
+        #else
+            if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began && !EventSystem.current.IsPointerOverGameObject(0))
+        #endif
             {
-                // TODO: Use layerMask parameter, when number of ignored objects grows. https://docs.unity3d.com/Manual/Layers.html
-                if (SelectedObject != _selectionHit.collider.gameObject && !_selectionHit.collider.CompareTag("UFO"))
+                if (Physics.Raycast(Ufo.UfoCameraComponentCamera.ScreenPointToRay(Input.mousePosition), out _selectionHit))
                 {
-                    SelectObject(_selectionHit.collider.gameObject);
+                    // TODO: Use layerMask parameter, when number of ignored objects grows. https://docs.unity3d.com/Manual/Layers.html
+                    if (SelectedObject != _selectionHit.collider.gameObject && !_selectionHit.collider.CompareTag("UFO"))
+                    {
+                        SelectObject(_selectionHit.collider.gameObject);
+                    }
+                    else
+                        SelectNone();
                 }
                 else
                     SelectNone();
             }
-            else
-                SelectNone();
-        }
     }
 
     public void SelectObject(GameObject obj)  // Set clicked object as selected

@@ -19,6 +19,7 @@ public class Ufo : MonoBehaviour
     private Vector3 _velocityCoefficient;
     private int _rotationCoefficient;
     public static GameObject UfoCamera;
+    public static Camera UfoCameraComponentCamera;
     private Vector3 _initialCameraUfoLocalPosition;
     private GameObject _topCamera;
     private float _timeInterval;
@@ -48,6 +49,7 @@ public class Ufo : MonoBehaviour
         _rigidBody = GetComponent<Rigidbody>();
         _forceBeam = GameObject.Find("ForceBeam");
         UfoCamera = GameObject.Find("CameraUfo");
+        UfoCameraComponentCamera = UfoCamera.GetComponent<Camera>();
         _topCamera = GameObject.Find("CameraTop");
         _laser = GameObject.Find("laser");
         _laserLight = GameObject.Find("laserLight");
