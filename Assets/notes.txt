@@ -16,9 +16,10 @@ object jitters when moving                                      Transform it in 
 
  TODO
 ══════
-► Implement bounding sphere!
-► Zvážit toon grafiku
+► Add option to turn off gravity and fall freely
 ► Implementovat přitahování a vrhání objektů
+• Zvážit toon grafiku
+• Ne všichni mají mesh filter (např. UFO). Asi to bude chtít traversovat children. (SelectedObjectDynamics)
 • Něco by se mohlo budovat
 • USE 'MOBILE' SHADERS! And use Mobile template when creating new project!
 • ZKUSIT ASTEROIDY I S FYZIKOU POMOCÍ PARTICLES!
@@ -47,10 +48,11 @@ object jitters when moving                                      Transform it in 
 • UI - percentual width?
 
 ► ťuk do 666kg UFO 88kg asteroid ani nehnul
+» cameraDistance - Mělo by brát v potaz i objekt "diagonálně otočený na výšku" (tj. že diagonála je svislá, objekt není vidět na výšku celý)
 » cinematic camera
 » always visible selection sprite (try depth test=false)
 » zkus vyrenderovat texturu na neplacatý objekt
-» průlet hvězdama
+» průlet hvězdama (ani raketě by neuškodil dojem pohybu)
 » přidat něco jako bombu, buď vystřelenou, nebo přidělanou k asteroidu => pěkný efekt, jak to rozhodí asteroidy
 » vyřešit kolizi asteroidů při jejich generování, zkusit nějakej raycast?
 » Destroy target -> quest for destroying target

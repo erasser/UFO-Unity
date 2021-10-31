@@ -82,14 +82,14 @@ public class GameController : MonoBehaviour
 
             Ufo.Script.MoveUfo(joystickHorizontalPlane, joystickVerticalPlane);
 
-        if (Input.GetKey(KeyCode.Space) ||
-            Input.GetKey(KeyCode.LeftControl) ||
-            Input.GetKey(KeyCode.W) ||
-            Input.GetKey(KeyCode.A) ||
-            Input.GetKey(KeyCode.S) ||
-            Input.GetKey(KeyCode.D) ||
-            Input.GetKey(KeyCode.Q) ||
-            Input.GetKey(KeyCode.E) ||
+        if (Input.GetKey(KeyCode.Space)         ||
+            Input.GetKey(KeyCode.LeftControl)   ||
+            Input.GetKey(KeyCode.W)             ||
+            Input.GetKey(KeyCode.A)             ||
+            Input.GetKey(KeyCode.S)             ||
+            Input.GetKey(KeyCode.D)             ||
+            Input.GetKey(KeyCode.Q)             ||
+            Input.GetKey(KeyCode.E)             ||
             Input.GetKey(KeyCode.LeftShift))
 
             Ufo.Script.MoveUfo();
@@ -114,25 +114,25 @@ public class GameController : MonoBehaviour
         // IsPointerOverGameObject (i.e. actually EventSystem object):
         //      I observed, that without an argument it's true when hovering UI on PC. With argument (0) it's true when touching UI on mobile.
 
-        #if UNITY_EDITOR
-            if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
-        #else
-            if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began && !EventSystem.current.IsPointerOverGameObject(0))
-        #endif
+#if UNITY_EDITOR
+        if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
+#else
+        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began && !EventSystem.current.IsPointerOverGameObject(0))
+#endif
+        {
+            if (Physics.Raycast(Ufo.UfoCameraComponentCamera.ScreenPointToRay(Input.mousePosition), out _selectionHit))
             {
-                if (Physics.Raycast(Ufo.UfoCameraComponentCamera.ScreenPointToRay(Input.mousePosition), out _selectionHit))
+                // TODO: Use layerMask parameter, when number of ignored objects grows. https://docs.unity3d.com/Manual/Layers.html
+                if (SelectedObject != _selectionHit.collider.gameObject && !_selectionHit.collider.CompareTag("UFO"))
                 {
-                    // TODO: Use layerMask parameter, when number of ignored objects grows. https://docs.unity3d.com/Manual/Layers.html
-                    if (SelectedObject != _selectionHit.collider.gameObject && !_selectionHit.collider.CompareTag("UFO"))
-                    {
-                        SelectObject(_selectionHit.collider.gameObject);
-                    }
-                    else
-                        SelectNone();
+                    SelectObject(_selectionHit.collider.gameObject);
                 }
                 else
                     SelectNone();
             }
+            else
+                SelectNone();
+        }
     }
 
     public void SelectObject(GameObject obj)  // Set clicked object as selected
@@ -231,11 +231,11 @@ public class GameController : MonoBehaviour
     // Manages destroying objects at one place, so OnDestroy() on every fucking object is not necessary.
     public void DestroyGameObject(GameObject obj)
     {
-        /***  If object is selected, unselect it (does not solve selected children, but it's not needed now). */
+        /***  If the object is selected, unselect it (does not solve selected children, but it's not needed now). */
         if (obj == SelectedObject)
             SelectNone();
 
-        /***  If object is a target (i.e. has attached a missileSupervisorTarget), let projectiles continue in their actual direction. */
+        /***  If the object is a target (i.e. has attached a missileSupervisorTarget), let projectiles continue in their actual direction. */
         var objTransform = obj.transform;
         foreach (Transform t in objTransform)
         {
@@ -254,9 +254,17 @@ public class GameController : MonoBehaviour
             tar.gameObject.transform.position = projectileTransform.position + 400 * projectileTransform.forward;
         }*/
 
-        /***  If object is a rocket, destroy also its missileSupervisorTarget */
-        if (objTransform.CompareTag("rocket"))
+        /***  If the object is a rocket, destroy also its missileSupervisorTarget */
+        if (obj.CompareTag("rocket"))
             Destroy(obj.GetComponent<MissileSupervisor>().m_guidanceSettings.m_target);
+
+        /***  If the object has a tween assigned, destroy the tween */ 
+        for (int i = TweenFactory.Tweens.Count - 1; i >= 0; --i)
+        {
+            var tween = TweenFactory.Tweens[i];
+            if (obj == tween.GetGameObject())
+              TweenFactory.RemoveTween(tween, TweenStopBehavior.DoNotModify);
+        }
 
         Destroy(obj.gameObject);
     }

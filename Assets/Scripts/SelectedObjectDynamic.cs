@@ -1,28 +1,22 @@
-using System;
 using UnityEngine;
 
-// This script is dynamically added to each selected object (just once).
+/// This script is dynamically added to each selected object (just once).
 
 public class SelectedObjectDynamic : MonoBehaviour
 {
-    private GameController _gameControllerScript;
+    // private GameController _gameControllerScript;
     public float boundingSphereRadius;
     public float verticalExtents;
-    public float horizontalToVerticalSizeRatio;
+    // public float horizontalToVerticalSizeRatio;
     public float cameraDistance;
 
     private void Awake()
     {
         CalculateBoundingSphereRadius();  // This is needed to be in Awake()
-        _gameControllerScript = GameObject.Find("GameController").GetComponent<GameController>();
+        // _gameControllerScript = GameObject.Find("GameController").GetComponent<GameController>();
     }
 
-    /// Moved To GameController
-    // private void OnDestroy()
-    // {
-    //     _gameControllerScript.SelectNone();
-    // }
-
+    // TODOO: Ne všichni mají mesh filter (např. UFO). Asi to bude chtít traversovat children.
     private void CalculateBoundingSphereRadius()  // .extents is half of bounds
     {
         var mesh = GetComponent<MeshFilter>().sharedMesh;

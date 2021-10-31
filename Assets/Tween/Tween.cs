@@ -17,7 +17,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 using System;
 using System.Collections.Generic;
-
+using Unity.VisualScripting.FullSerializer;
 using UnityEngine;
 
 namespace DigitalRuby.Tween
@@ -66,8 +66,8 @@ namespace DigitalRuby.Tween
     /// </summary>
     public class TweenFactory : MonoBehaviour
     {
-        private static GameObject root;
-        private static readonly List<ITween> tweens = new List<ITween>();
+        public static GameObject root;
+        public static readonly List<ITween> Tweens = new List<ITween>();
         private static GameObject toDestroy;
 
         private static void EnsureCreated()
@@ -105,20 +105,20 @@ namespace DigitalRuby.Tween
         {
             if (ClearTweensOnLevelLoad)
             {
-                tweens.Clear();
+                Tweens.Clear();
             }
         }
 
-        private void Update()
+        private void FixedUpdate()  //Update()
         {
             ITween t;
 
-            for (int i = tweens.Count - 1; i >= 0; i--)
+            for (int i = Tweens.Count - 1; i >= 0; i--)
             {
-                t = tweens[i];
-                if (t.Update(t.TimeFunc()) && i < tweens.Count && tweens[i] == t)
+                t = Tweens[i];
+                if (t.Update(t.TimeFunc()) && i < Tweens.Count && Tweens[i] == t)
                 {
-                    tweens.RemoveAt(i);
+                    Tweens.RemoveAt(i);
                 }
             }
         }
@@ -264,7 +264,7 @@ namespace DigitalRuby.Tween
             {
                 RemoveTweenKey(tween.Key, AddKeyStopBehavior);
             }
-            tweens.Add(tween);
+            Tweens.Add(tween);
         }
 
         /// <summary>
@@ -276,7 +276,7 @@ namespace DigitalRuby.Tween
         public static bool RemoveTween(ITween tween, TweenStopBehavior stopBehavior)
         {
             tween.Stop(stopBehavior);
-            return tweens.Remove(tween);
+            return Tweens.Remove(tween);
         }
 
         /// <summary>
@@ -293,13 +293,13 @@ namespace DigitalRuby.Tween
             }
 
             bool foundOne = false;
-            for (int i = tweens.Count - 1; i >= 0; i--)
+            for (int i = Tweens.Count - 1; i >= 0; i--)
             {
-                ITween t = tweens[i];
+                ITween t = Tweens[i];
                 if (key.Equals(t.Key))
                 {
                     t.Stop(stopBehavior);
-                    tweens.RemoveAt(i);
+                    Tweens.RemoveAt(i);
                     foundOne = true;
                 }
             }
@@ -311,7 +311,7 @@ namespace DigitalRuby.Tween
         /// </summary>
         public static void Clear()
         {
-            tweens.Clear();
+            Tweens.Clear();
         }
 
         /// <summary>
@@ -327,12 +327,12 @@ namespace DigitalRuby.Tween
         /// <summary>
         /// Default time func
         /// </summary>
-        public static Func<float> DefaultTimeFunc = TimeFuncDeltaTime;
+        public static Func<float> DefaultTimeFunc = TimeFuncFixedDeltaTime; //TimeFuncDeltaTime;
 
         /// <summary>
         /// Time func delta time instance
         /// </summary>
-        public static readonly Func<float> TimeFuncDeltaTimeFunc = TimeFuncDeltaTime;
+        public static readonly Func<float> TimeFuncDeltaTimeFunc = TimeFuncFixedDeltaTime; //TimeFuncDeltaTime;
 
         /// <summary>
         /// Time func unscaled delta time instance
@@ -346,6 +346,15 @@ namespace DigitalRuby.Tween
         private static float TimeFuncDeltaTime()
         {
             return Time.deltaTime;
+        }
+
+        /// <summary>
+        /// Míša's time func that uses Time.fixedDeltaTime
+        /// </summary>
+        /// <returns>Time.fixedDeltaTime</returns>
+        private static float TimeFuncFixedDeltaTime()
+        {
+            return Time.fixedDeltaTime;
         }
 
         /// <summary>
@@ -531,6 +540,8 @@ namespace DigitalRuby.Tween
         /// <param name="elapsedTime">The elapsed time to add to the tween.</param>
         /// <returns>True if done, false if not</returns>
         bool Update(float elapsedTime);
+
+        GameObject GetGameObject();
     }
 
     /// <summary>
@@ -626,6 +637,15 @@ namespace DigitalRuby.Tween
         /// Time function - returns elapsed time for next frame
         /// </summary>
         public System.Func<float> TimeFunc { get; set; }
+
+        /// <summary>
+        /// GameObject that the tween is assigned to.
+        /// </summary>
+        /// <returns>GameObject</returns>
+        public GameObject GetGameObject()    // uff
+        {
+            return GameObject;
+        }
 
 #if IS_UNITY
 

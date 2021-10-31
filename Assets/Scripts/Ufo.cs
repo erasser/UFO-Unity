@@ -36,16 +36,14 @@ public class Ufo : MonoBehaviour
 
     void Awake()
     {
+        Application.targetFrameRate = 666;
         // ufo = Instantiate(_gameControllerScript.ufoPrefab);
         Script = GetComponent<Ufo>();
         arrow = transform.Find("arrow").gameObject;
-       
     }
     
     void Start()
     {
-        Application.targetFrameRate = 666;
-
         _rigidBody = GetComponent<Rigidbody>();
         _forceBeam = GameObject.Find("ForceBeam");
         UfoCamera = GameObject.Find("CameraUfo");
@@ -191,9 +189,11 @@ public class Ufo : MonoBehaviour
 
         DoTransform:
 
+        // TODOO ----------- Udělat pořádně + vyřešit i nad jinými objekt než nad zemí (Raycast, SphereCast), obejít se bez odmocniny
+        // TODOO ----------- Možná by stačila větší koule jako trigger, kterej by hodně zvětšil drag, bylo by jednoduché a univerzální (musely by se z toho excludnout projektily apod.)
         if (transform.localPosition.y < 10 && _velocityChange.y < 0)
             // _velocityChange.y /= (11 - transform.position.y) * 10;
-            _velocityChange.y = - Mathf.Sqrt(transform.localPosition.y / 3.75f);  // TODOO ----------- Udělat pořádně + vyřešit i nad jinými objekt než nad zemí (Raycast, SphereCast), obejít se bez odmocniny
+            _velocityChange.y = - Mathf.Sqrt(transform.localPosition.y / 3.75f);
 
         if (_velocityChange.x != 0 || _velocityChange.y != 0 || _velocityChange.z != 0)
             _rigidBody.AddRelativeForce(_velocityChange, ForceMode.VelocityChange);
