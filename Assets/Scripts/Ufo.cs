@@ -322,7 +322,7 @@ public class Ufo : MonoBehaviour
         _isAutoLeveling = true;
     }
 
-    private void UpdateAutoLeveling()  // TODO
+    private void UpdateAutoLeveling()  // TODO  (btw. existuje RigidBody.MoveRotation)
     {
         var torqueForce = transform.eulerAngles;
         // torqueForce.y = 0;

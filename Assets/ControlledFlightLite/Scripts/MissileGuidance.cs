@@ -166,9 +166,6 @@ namespace SparseDesign
 
             public MissileGuidance(GameObject missile, GuidanceSettings settings)
             {
-                // _initialMissileRotation = missile.transform.rotation;
-                Debug.Log(this);
-                
                 if (!missile) Debug.LogError("A valid missile object must be provided when instantiating missile guidance");
                 m_missile = missile;
 
@@ -182,11 +179,13 @@ namespace SparseDesign
 
             /// <summary>
             /// Align object z-axis with velocity.
-            /// Also handle Bank-To-Turn.
+            /// Also handle Bank-To-Turn. (Míša's implementation)
             /// </summary>
             public void AttitudeAdjustment()
             {
                 float dt = (m_firstCommand) ? 0f : Time.time - m_lastTime;
+
+                var lastMissileRotationY = m_missileRb.transform.eulerAngles.y;
 
                 if (m_missileRb.velocity.sqrMagnitude < float.Epsilon) return;
                 Vector3 up;
@@ -200,6 +199,10 @@ namespace SparseDesign
                 else
                     newRot = Quaternion.Lerp(oldRot, Quaternion.LookRotation(m_missileRb.velocity, up), dt / 0.1f);//Limit rotation to avoid odd behaviour around vertical (gimbal lock).
 
+                // var deltaRotationY = Mathf.Abs(newRot.eulerAngles.y - lastMissileRotationY);
+                var deltaRotationY = lastMissileRotationY - newRot.eulerAngles.y;
+                var tmpZ = 20 * deltaRotationY;
+                newRot = Quaternion.Euler(new Vector3(newRot.eulerAngles.x, newRot.eulerAngles.y, tmpZ));
                 m_missileRb.MoveRotation(newRot);
             }
             

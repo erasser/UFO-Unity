@@ -4,6 +4,7 @@ using DigitalRuby.Tween;
 using SparseDesign.ControlledFlight;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 /// Could use singleton for this
@@ -28,7 +29,7 @@ public class GameController : MonoBehaviour
     private GameObject _3dGrid;
     public GameObject ufoPrefab;
     // public Ufo ufoScript;
-    private GameObject _selectionSpriteInstance;
+    public GameObject selectionSpriteInstance;
     public static Vector2 SelectedObjectCameraFOV;  // .x = horizontal FOV, .y = vertical FOV
     public GameObject missileSupervisorTargetPrefab;  // It's just invisible dummy
     public static GameObject Enemy;
@@ -45,7 +46,7 @@ public class GameController : MonoBehaviour
         _laserButton.onClick.AddListener(Ufo.ToggleLaser);
         _3dGrid = GameObject.Find("3d_grid_planes");
         // _ufoInstance = GameObject.Find("UFO").transform.GetComponent<Ufo>();            // Ufo.cs - allows me to call non-static method
-        _selectionSpriteInstance = Instantiate(selectionSpritePrefab);
+        selectionSpriteInstance = Instantiate(selectionSpritePrefab);
         _selectedObjectCamera = GameObject.Find("CameraSelectedObject");
         _selectedObjectCamera.SetActive(false);
         _selectedObjectCameraTexture = GameObject.Find("SelectedObjectCameraTexture");
@@ -159,8 +160,8 @@ public class GameController : MonoBehaviour
 
         SelectedObjectRelativeUpPosition = SelectedObjectMustCenterPivot ? new Vector3(0, _selectedObjectScript.verticalExtents, 0) : Vector3.zero;
         var scale = _selectedObjectScript.boundingSphereRadius * 4;
-        _selectionSpriteInstance.transform.localScale = new Vector3(scale, scale, scale);  // uff
-        _selectionSpriteInstance.SetActive(true);
+        selectionSpriteInstance.transform.localScale = new Vector3(scale, scale, scale);  // uff
+        selectionSpriteInstance.SetActive(true);
     }
 
     public void SelectNone()
@@ -171,7 +172,7 @@ public class GameController : MonoBehaviour
             _selectedObjectCamera.SetActive(false);
             _selectedObjectCameraTexture.SetActive(false);
             _selectedObjectCameraText.text = "";
-            _selectionSpriteInstance.SetActive(false);
+            selectionSpriteInstance.SetActive(false);
         }
         catch (Exception e)
         {
