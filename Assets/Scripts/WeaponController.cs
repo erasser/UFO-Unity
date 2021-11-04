@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DigitalRuby.Tween;
 using SparseDesign.ControlledFlight;
 using UnityEngine;
@@ -6,7 +7,7 @@ public class WeaponController : MonoBehaviour
 {
     public GameObject rocketPrefab;
     public static WeaponController Script;
-    private float _projectileRotationZ;  // Used just to pass variable to passed tween function
+    private float _projectileRotationZ; // Used just to pass variable to passed tween function
 
     void Start()
     {
@@ -28,41 +29,51 @@ public class WeaponController : MonoBehaviour
         rocket.transform.Find("rocketCamera").gameObject.SetActive(true);
         _projectileRotationZ = rocket.transform.eulerAngles.z;
         var missileSupervisor = rocket.GetComponent<MissileSupervisor>();
+        missileSupervisor.m_guidanceSettings.m_target =
+            SetWeaponTarget(shooter, missileSupervisor); // Must be set before end of the tween
         // var rocketScript = rocket.GetComponent<Projectile>();
 
-        // TODO: Buildings are targeted to their bottoms
         // TODO: Add some rocket camera management (try to use just 1 cam)
         // TODO: There remains some shit badly affecting performance when firing more missiles, it remains also when re-played
         //       (It's cleared on Unity restart). TrailRenderer obviously is not the cause.
-        // TODO: Disable collider instead of using trigger? - Test with enemy
         // TODO: Test with rotated shooter
         // TODO: Fix rocket deploy when UFO is moving
         // TODO: Make rocket camera texture not visible by default
         // TODO: Consider making rockets destroyable by rockets?
         // TODO: Ensure rocket will not hit the shooter, if the shooter is in the rocket's way (e.g. above the shooter)
+        // TODO: (done) Disable collider instead of using trigger? - Test with enemy
+        // TODO: (done) Implement rocket blast (blast objects in proximity)
+        // TODO: (done) Buildings are targeted to their bottoms
+        // TODO: (done) If two rockets are fired quickly after the other one with change of target between, these rockets share the same target (thi first one is overriden)
         // TODO: (done) Implement rocket banking
         // TODO: (done) Use fixed DeltaTime
         // TODO: (done) Other rocket fucks previous rocket motion - Maybe it's because the same Key
         // TODO: (done) Use Float Tween - I won't implement this
-        
+
         // Pull the rocket down using tween
         rocket.transform.position = shooter.transform.position;
 
         float shooterHalfHeight;
-        if (shooter == Ufo.Script.gameObject)  // TODO: Temporary solution, fix it in SelectedObjectDynamic
-            shooterHalfHeight = shooter.transform.Find("UFO_body").GetComponent<MeshFilter>().sharedMesh.bounds.extents.y * shooter.transform.lossyScale.y;
+        if (shooter == Ufo.Script.gameObject) // TODO: Temporary solution, fix it in RigidbodyAssistant
+            shooterHalfHeight =
+                shooter.transform.Find("UFO_body").GetComponent<MeshFilter>().sharedMesh.bounds.extents.y *
+                shooter.transform.lossyScale.y;
         else
-            shooterHalfHeight = shooter.GetComponent<MeshFilter>().sharedMesh.bounds.extents.y * shooter.transform.lossyScale.y;
+            shooterHalfHeight = shooter.GetComponent<MeshFilter>().sharedMesh.bounds.extents.y *
+                                shooter.transform.lossyScale.y;
 
         rocket.transform.Translate(Vector3.down * shooterHalfHeight);
 
         var shooterPosition = shooter.transform.position;
         var rocketPosition = rocket.transform.position;
-        var endPos = shooterPosition + (rocketPosition - shooterPosition).normalized * .8f;  // Is not affected by rocketScript.halfHeight
+        var endPos =
+            shooterPosition +
+            (rocketPosition - shooterPosition).normalized * .8f; // Is not affected by rocketScript.halfHeight
 
-        var startPos = rocketPosition;  
-        rocket.Tween($"tween_{rocket.name}", startPos, endPos, 1.2f, TweenScaleFunctions.QuadraticEaseOut, UpdatePos, MoveCompleted);
-        
+        var startPos = rocketPosition;
+        rocket.Tween($"tween_{rocket.name}", startPos, endPos, 1.2f, TweenScaleFunctions.QuadraticEaseOut, UpdatePos,
+            MoveCompleted);
+
         void UpdatePos(ITween<Vector3> t)
         {
             rocket.transform.position = t.CurrentValue;
@@ -85,12 +96,34 @@ public class WeaponController : MonoBehaviour
             rocket.GetComponent<BoxCollider>().enabled = true;
             rocket.GetComponent<TrailRenderer>().enabled = true;
 
-            missileSupervisor.m_guidanceSettings.m_target = SetWeaponTarget(shooter, missileSupervisor);
             missileSupervisor.m_launchCustomDir = rocket.transform.forward;
             missileSupervisor.StartLaunchSequence();
         }
+    }
 
-        // _gameControllerInstance.SelectObject(newRocket);
+    // TODO: RigidBodies could be cached somehow (every object could have it as its variable)
+    // TODO: Could also cause damage
+    public static void ProcessBlast(Vector3 origin, int radius, int energy, Rigidbody excludeTarget, Rigidbody excludeInitiator = null)
+    {
+        var rigidbodies = (Rigidbody[]) FindObjectsOfType(typeof(Rigidbody));
+
+        var count = rigidbodies.Length;
+        for (int i = 0; i < count; ++i)
+        {
+            var objRigidbody = rigidbodies[i];
+            if (objRigidbody == excludeTarget || objRigidbody == excludeInitiator) continue;
+            var obj = objRigidbody.gameObject;
+
+            var forceDir = (obj.transform.position - origin).normalized;
+
+            if (Physics.Raycast(origin, forceDir, out var hit, radius))
+            {
+                // if (!objRigidbody.useGravity) // Something disables it for fucking testing cubes
+                //     objRigidbody.useGravity = true;
+
+                objRigidbody.AddForce(energy * forceDir / hit.distance * hit.distance, ForceMode.Impulse);
+            }
+        }
     }
 
     /// <param name="shooter">Shooter object</param>
@@ -107,6 +140,9 @@ public class WeaponController : MonoBehaviour
             {
                 target.transform.SetParent(GameController.SelectedObject.transform);
                 target.transform.localPosition = Vector3.zero;
+
+                if (GameController.SelectedObjectMustCenterPivot)
+                    target.transform.Translate(0, GameController.RigidbodyAssistantScript.verticalExtents, 0);
             }
             else
                 target.transform.position = shooterTransform.position + 10000 * shooterTransform.forward;
@@ -119,5 +155,4 @@ public class WeaponController : MonoBehaviour
 
         return target;
     }
-
 }

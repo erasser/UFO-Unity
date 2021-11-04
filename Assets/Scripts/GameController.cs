@@ -1,10 +1,8 @@
 using System;
-using System.Collections.Generic;
 using DigitalRuby.Tween;
 using SparseDesign.ControlledFlight;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 /// Could use singleton for this
@@ -18,7 +16,7 @@ public class GameController : MonoBehaviour
     private static Text _infoText; // UI element
     private Button _laserButton; // UI element
     public static GameObject SelectedObject;
-    private static SelectedObjectDynamic _selectedObjectScript;
+    public static RigidbodyAssistant RigidbodyAssistantScript;
     // public static float SelectedObjectWorldRadius;
     public static Vector3 SelectedObjectRelativeUpPosition;
     private RaycastHit _selectionHit;
@@ -35,6 +33,7 @@ public class GameController : MonoBehaviour
     public static GameObject Enemy;
     public static GameController Script;
     public static GameObject ufo;
+    private static GameObject _buildingsParent;
     
 
     void Start()
@@ -54,6 +53,7 @@ public class GameController : MonoBehaviour
         _selectedObjectCameraTexture.SetActive(false);
         Script = GetComponent<GameController>();
         ufo = Instantiate(ufoPrefab);
+        _buildingsParent = GameObject.Find("city").transform.Find("buildings").gameObject;
 
         var vFOV = _selectedObjectCamera.GetComponent<Camera>().fieldOfView;
         SelectedObjectCameraFOV = new Vector2(Camera.VerticalToHorizontalFieldOfView(vFOV, 2), vFOV);
@@ -103,6 +103,9 @@ public class GameController : MonoBehaviour
         if (Input.GetKey(KeyCode.C))
             WeaponController.Script.FireRocket(Enemy);
 
+        if (Input.GetKey(KeyCode.U))
+            Resources.UnloadUnusedAssets();
+
         // if (Input.GetKey(KeyCode.Y))
         //     ChangeTargetsDebug();
     }
@@ -138,28 +141,19 @@ public class GameController : MonoBehaviour
 
     public void SelectObject(GameObject obj)  // Set clicked object as selected
     {
+        if (obj.CompareTag("questTarget")) return;
+
         SelectedObject = obj;
 
-        _selectedObjectScript = SelectedObject.transform.GetComponent<SelectedObjectDynamic>();
-        if (!_selectedObjectScript)
-        {
-            SelectedObject.AddComponent(Type.GetType("SelectedObjectDynamic"));
-            _selectedObjectScript = SelectedObject.transform.GetComponent<SelectedObjectDynamic>();
-        }
+        RigidbodyAssistantScript = SelectedObject.transform.GetComponent<RigidbodyAssistant>() ?? (RigidbodyAssistant) SelectedObject.AddComponent(Type.GetType("RigidbodyAssistant"));
 
         _selectedObjectCamera.SetActive(true);
         _selectedObjectCameraTexture.SetActive(true);
         _selectedObjectCameraText.text = SelectedObject.name;
-        SelectedObjectMustCenterPivot = SelectedObject.transform.parent && SelectedObject.transform.parent.gameObject == GameObject.Find("buildings");
+        SelectedObjectMustCenterPivot = IsBuilding(SelectedObject);
 
-        // var sphereCollider = SelectedObject.AddComponent<SphereCollider>();
-        // SelectedObjectWorldRadius = sphereCollider.radius * SelectedObject.transform.lossyScale.x;
-        // Destroy(sphereCollider);
-        // SelectedObjectRelativeUpPosition = SelectedObjectMustCenterPivot ? new Vector3(0, SelectedObjectWorldRadius, 0) : Vector3.zero;
-        // var scale = SelectedObjectWorldRadius * 4;
-
-        SelectedObjectRelativeUpPosition = SelectedObjectMustCenterPivot ? new Vector3(0, _selectedObjectScript.verticalExtents, 0) : Vector3.zero;
-        var scale = _selectedObjectScript.boundingSphereRadius * 4;
+        SelectedObjectRelativeUpPosition = SelectedObjectMustCenterPivot ? new Vector3(0, RigidbodyAssistantScript.verticalExtents, 0) : Vector3.zero;
+        var scale = RigidbodyAssistantScript.boundingSphereRadius * 4;
         selectionSpriteInstance.transform.localScale = new Vector3(scale, scale, scale);  // uff
         selectionSpriteInstance.SetActive(true);
     }
@@ -185,15 +179,15 @@ public class GameController : MonoBehaviour
     {
         if (!SelectedObject) return;
 
-        var relativePivotPosition = SelectedObjectMustCenterPivot ? new Vector3(0, _selectedObjectScript.verticalExtents, 0) : Vector3.zero;
-        var cameraVerticalOffset = new Vector3(0, _selectedObjectScript.verticalExtents / 8, 0);  // The higher is the camera, the lower is the camera target
+        var relativePivotPosition = SelectedObjectMustCenterPivot ? new Vector3(0, RigidbodyAssistantScript.verticalExtents, 0) : Vector3.zero;
+        var cameraVerticalOffset = new Vector3(0, RigidbodyAssistantScript.verticalExtents / 8, 0);  // The higher is the camera, the lower is the camera target
 
         // camera position
         var selectedObjectPosition = SelectedObject.transform.position;
         _selectedObjectCamera.transform.position = selectedObjectPosition + new Vector3(
-            Mathf.Cos(Time.time / 4) * _selectedObjectScript.cameraDistance,  // there was .boundingSphereRadius * 2
-            _selectedObjectScript.verticalExtents,
-            Mathf.Sin(Time.time / 4) * _selectedObjectScript.cameraDistance) + relativePivotPosition + cameraVerticalOffset;
+            Mathf.Cos(Time.time / 4) * RigidbodyAssistantScript.cameraDistance,  // there was .boundingSphereRadius * 2
+            RigidbodyAssistantScript.verticalExtents,
+            Mathf.Sin(Time.time / 4) * RigidbodyAssistantScript.cameraDistance) + relativePivotPosition + cameraVerticalOffset;
 
         // camera target
         var cameraTarget = selectedObjectPosition + relativePivotPosition;
@@ -201,9 +195,8 @@ public class GameController : MonoBehaviour
 
         // camera-view obstacle detection
         var raycastDirectionVector = _selectedObjectCamera.transform.position - cameraTarget;
-        RaycastHit hit;
         // Debug.DrawRay(cameraTarget, raycastDirectionVector * 10, Color.yellow);
-        if (Physics.Raycast(cameraTarget, raycastDirectionVector, out hit, raycastDirectionVector.magnitude))
+        if (Physics.Raycast(cameraTarget, raycastDirectionVector, out var hit, raycastDirectionVector.magnitude))
         {
             // TODO: Check, if this comparison works
             if (hit.collider.gameObject != SelectedObject)  // Exclude selected object itself
@@ -229,7 +222,9 @@ public class GameController : MonoBehaviour
 //         Ufo.Script.gameObject.transform.LookAt(Quest.Current.QuestTarget.transform);
     }
 
-    // Manages destroying objects at one place, so OnDestroy() on every fucking object is not necessary.
+    /// <summary>
+    /// Manages destroying objects at one place, so OnDestroy() on every fucking object is not necessary.
+    /// </summary>
     public void DestroyGameObject(GameObject obj)
     {
         /***  If the object is selected, unselect it (does not solve selected children, but it's not needed now). */
@@ -257,7 +252,10 @@ public class GameController : MonoBehaviour
 
         /***  If the object is a rocket, destroy also its missileSupervisorTarget */
         if (obj.CompareTag("rocket"))
+        {
             Destroy(obj.GetComponent<MissileSupervisor>().m_guidanceSettings.m_target);
+            WeaponController.ProcessBlast(obj.transform.position, 20, 100, obj.GetComponent<Projectile>().hitObjectRigidbody, obj.GetComponent<Rigidbody>());
+        }
 
         /***  If the object has a tween assigned, destroy the tween */ 
         for (int i = TweenFactory.Tweens.Count - 1; i >= 0; --i)
@@ -267,7 +265,12 @@ public class GameController : MonoBehaviour
               TweenFactory.RemoveTween(tween, TweenStopBehavior.DoNotModify);
         }
 
-        Destroy(obj.gameObject);
+        Destroy(obj);
+    }
+
+    public static bool IsBuilding(GameObject obj)
+    {
+        return obj.transform.parent?.gameObject == _buildingsParent;
     }
 
     public void ChangeTargetsDebug()
@@ -292,8 +295,7 @@ public class GameController : MonoBehaviour
         // square root ↓ of ↓ positive number respecting ↓ lost sign
         return Mathf.Sqrt(Math.Abs(number)) * Mathf.Sign(number);
     }
-    
-   
+
     // TODO: Co zneužít přetěžování operátorů + extendnout třídu Vector3?
     // This is because they won't allow me to change individual Vector component
     // private static void UpdateVectorComponent(ref Vector3 vectorToUpdate, string component, float value)

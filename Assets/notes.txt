@@ -19,7 +19,7 @@ object jitters when moving                                      Transform it in 
 ► Add option to turn off gravity and fall freely
 ► Implementovat přitahování a vrhání objektů
 • Zvážit toon grafiku
-• Ne všichni mají mesh filter (např. UFO). Asi to bude chtít traversovat children. (SelectedObjectDynamics)
+• Ne všichni mají mesh filter (např. UFO). Asi to bude chtít traversovat children. (RigidbodyAssistant)
 • Něco by se mohlo budovat
 • USE 'MOBILE' SHADERS! And use Mobile template when creating new project!
 • ZKUSIT ASTEROIDY I S FYZIKOU POMOCÍ PARTICLES!
@@ -72,6 +72,7 @@ object jitters when moving                                      Transform it in 
 • Use .localPosition instead of .position if possible 
 • object pooling (use for rockets etc.)
 • What's not visible to camera (renderer.isVisible), need not to be updated (I presume, with an excteption to physical objects)
+• When Vector3.normalized is calculated? When it's called or is it precalculated? I contains square root, I guess.
 
  physics
 ═════════

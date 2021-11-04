@@ -1,4 +1,3 @@
-using DigitalRuby.Tween;
 using UnityEngine;
 
 /// Opodmínkovat TrailRenderer, pokud se bude používat s něčím bez trailu!
@@ -12,6 +11,7 @@ public class Projectile : MonoBehaviour
     private float _shootTime;                   // Time, when this projectile was shot
     public float halfHeight;
     public static int ProjectileCounter = 0;
+    public Rigidbody hitObjectRigidbody;
 
     void Awake()
     {
@@ -27,10 +27,10 @@ public class Projectile : MonoBehaviour
     
     public void OnCollisionEnter(Collision other)
     {
-        // print(other.collider);
-        other.collider.gameObject.GetComponent<Enemy>()?.GetDamage(50);
+        if (CompareTag("rocket"))
+            hitObjectRigidbody = other.gameObject.GetComponent<Rigidbody>();  // For rocket blast to exclude hit object from blast effect
+        other.gameObject.GetComponent<Enemy>()?.GetDamage(50);
         _gameControllerInstance.DestroyGameObject(gameObject);
-        // Time.timeScale = 0;
     }
 
     // Ensures the projectile doesn't collide with the shooter itself

@@ -194,15 +194,13 @@ namespace SparseDesign
                 var oldRot = m_missile.transform.rotation;
 
                 Quaternion newRot;
-                if (m_firstCommand)
+                if (m_firstCommand)  // TODO: Do I need this condition? (If not, fuck it off the loop)
                     newRot = oldRot;
                 else
                     newRot = Quaternion.Lerp(oldRot, Quaternion.LookRotation(m_missileRb.velocity, up), dt / 0.1f);//Limit rotation to avoid odd behaviour around vertical (gimbal lock).
 
-                // var deltaRotationY = Mathf.Abs(newRot.eulerAngles.y - lastMissileRotationY);
-                var deltaRotationY = lastMissileRotationY - newRot.eulerAngles.y;
-                var tmpZ = 20 * deltaRotationY;
-                newRot = Quaternion.Euler(new Vector3(newRot.eulerAngles.x, newRot.eulerAngles.y, tmpZ));
+                // Sets missile Z rotation proportional to change of its Y rotation
+                newRot = Quaternion.Euler(new Vector3(newRot.eulerAngles.x, newRot.eulerAngles.y, 20 * (lastMissileRotationY - newRot.eulerAngles.y)));
                 m_missileRb.MoveRotation(newRot);
             }
             

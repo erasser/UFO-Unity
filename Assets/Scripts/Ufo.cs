@@ -14,8 +14,8 @@ public class Ufo : MonoBehaviour
     private static GameObject _forceBeam;
     private static bool _forceBeamEnabled;
     private static Rigidbody _rigidBody;
-    private static Vector3 _velocityChange;  // Add an instant velocity change to the rigidbody (ignoring its mass)
-    private static Vector3 _rotationChange;
+    private static Vector3 _velocityChange = Vector3.zero;  // Add an instant velocity change to the rigidbody (ignoring its mass)
+    private static Vector3 _rotationChange = Vector3.zero;
     private Vector3 _velocityCoefficient;
     private int _rotationCoefficient;
     public static GameObject UfoCamera;
@@ -105,13 +105,13 @@ public class Ufo : MonoBehaviour
             ), ForceMode.VelocityChange);*/ // TODO: Try replacing with RotateLocal to remove inertia
         }
 
-        if (Input.GetKeyDown(KeyCode.F))  // switch force field
-        {
-            _forceBeamEnabled = !_forceBeamEnabled;
-            _forceBeam.SetActive(_forceBeamEnabled);
-        
-            // _ufoCamera.transform.Rotate(_forceBeamEnabled ? new Vector3(10, 0, 0) : new Vector3(-10, 0, 0));
-        }
+        // if (Input.GetKeyDown(KeyCode.F))  // switch force field
+        // {
+        //     _forceBeamEnabled = !_forceBeamEnabled;
+        //     _forceBeam.SetActive(_forceBeamEnabled);
+        //
+        //     // _ufoCamera.transform.Rotate(_forceBeamEnabled ? new Vector3(10, 0, 0) : new Vector3(-10, 0, 0));
+        // }
     }
     
     void FixedUpdate()
