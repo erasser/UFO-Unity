@@ -7,7 +7,7 @@ using Random = UnityEngine.Random;
 
 // TODO: Remove 'new Vector3' from code, use some predefined tmpVector
 
-public class AsteroidController : MonoBehaviour
+public class Asteroid : MonoBehaviour
 {
     // private GameObject _saturnRingParticlesParent;
 

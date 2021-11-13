@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DigitalRuby.Tween;
 using SparseDesign.ControlledFlight;
@@ -5,13 +6,15 @@ using UnityEngine;
 
 public class WeaponController : MonoBehaviour
 {
+    public static WeaponController Instance;
     public GameObject rocketPrefab;
     public static WeaponController Script;
     private float _projectileRotationZ; // Used just to pass variable to passed tween function
+    private static Collider[] _blastSphereColliders = new Collider[100];
 
     void Start()
     {
-        Script = GetComponent<WeaponController>();
+        Instance = this;
     }
 
     /// <summary>
@@ -29,18 +32,17 @@ public class WeaponController : MonoBehaviour
         rocket.transform.Find("rocketCamera").gameObject.SetActive(true);
         _projectileRotationZ = rocket.transform.eulerAngles.z;
         var missileSupervisor = rocket.GetComponent<MissileSupervisor>();
-        missileSupervisor.m_guidanceSettings.m_target =
-            SetWeaponTarget(shooter, missileSupervisor); // Must be set before end of the tween
+        missileSupervisor.m_guidanceSettings.m_target = SetWeaponTarget(shooter, missileSupervisor); // Must be set before end of the tween
         // var rocketScript = rocket.GetComponent<Projectile>();
 
         // TODO: Add some rocket camera management (try to use just 1 cam)
         // TODO: There remains some shit badly affecting performance when firing more missiles, it remains also when re-played
         //       (It's cleared on Unity restart). TrailRenderer obviously is not the cause.
-        // TODO: Test with rotated shooter
         // TODO: Fix rocket deploy when UFO is moving
         // TODO: Make rocket camera texture not visible by default
         // TODO: Consider making rockets destroyable by rockets?
-        // TODO: Ensure rocket will not hit the shooter, if the shooter is in the rocket's way (e.g. above the shooter)
+        // TODO: Ensure rocket will not hit the shooter, if the shooter is in the rocket's way (e.g. above the shooter) - It will. Maybe first push a bit the rocket forward and set a delay to launch method.
+        // TODO: (done) Test with rotated shooter
         // TODO: (done) Disable collider instead of using trigger? - Test with enemy
         // TODO: (done) Implement rocket blast (blast objects in proximity)
         // TODO: (done) Buildings are targeted to their bottoms
@@ -54,25 +56,19 @@ public class WeaponController : MonoBehaviour
         rocket.transform.position = shooter.transform.position;
 
         float shooterHalfHeight;
-        if (shooter == Ufo.Script.gameObject) // TODO: Temporary solution, fix it in RigidbodyAssistant
-            shooterHalfHeight =
-                shooter.transform.Find("UFO_body").GetComponent<MeshFilter>().sharedMesh.bounds.extents.y *
-                shooter.transform.lossyScale.y;
+        if (shooter == Ufo.Instance.gameObject) // TODO: Temporary solution, fix it in RigidbodyAssistant
+            shooterHalfHeight = shooter.transform.Find("UFO_body").GetComponent<MeshFilter>().sharedMesh.bounds.extents.y * shooter.transform.lossyScale.y;
         else
-            shooterHalfHeight = shooter.GetComponent<MeshFilter>().sharedMesh.bounds.extents.y *
-                                shooter.transform.lossyScale.y;
+            shooterHalfHeight = shooter.GetComponent<MeshFilter>().sharedMesh.bounds.extents.y * shooter.transform.lossyScale.y;
 
         rocket.transform.Translate(Vector3.down * shooterHalfHeight);
 
         var shooterPosition = shooter.transform.position;
         var rocketPosition = rocket.transform.position;
-        var endPos =
-            shooterPosition +
-            (rocketPosition - shooterPosition).normalized * .8f; // Is not affected by rocketScript.halfHeight
+        var endPos = shooterPosition + (rocketPosition - shooterPosition).normalized * .8f; // Is not affected by rocketScript.halfHeight
 
         var startPos = rocketPosition;
-        rocket.Tween($"tween_{rocket.name}", startPos, endPos, 1.2f, TweenScaleFunctions.QuadraticEaseOut, UpdatePos,
-            MoveCompleted);
+        rocket.Tween($"tween_{rocket.name}", startPos, endPos, 1.2f, TweenScaleFunctions.QuadraticEaseOut, UpdatePos, MoveCompleted);
 
         void UpdatePos(ITween<Vector3> t)
         {
@@ -101,9 +97,29 @@ public class WeaponController : MonoBehaviour
         }
     }
 
+    // TODO: Could also cause damage
+    public static void ProcessBlast(Vector3 origin, int radius, int energy, GameObject excludeTarget, GameObject excludeInitiator = null)
+    {
+        var collidersCount = Physics.OverlapSphereNonAlloc(origin, radius, _blastSphereColliders);
+        for (int i = 0; i < collidersCount; ++i)
+        {
+            var obj = _blastSphereColliders[i].gameObject;
+            if (obj == excludeTarget || obj == excludeInitiator)
+                continue;
+            
+            Rigidbody rb = obj.GetComponent<Rigidbody>();
+
+            if (rb != null && !rb.isKinematic)
+            {
+                rb.AddExplosionForce(energy, origin, radius);
+                // Debug.DrawRay(origin, obj.transform.position-origin, Color.magenta, 60);
+            }
+        }
+    }
+    
     // TODO: RigidBodies could be cached somehow (every object could have it as its variable)
     // TODO: Could also cause damage
-    public static void ProcessBlast(Vector3 origin, int radius, int energy, Rigidbody excludeTarget, Rigidbody excludeInitiator = null)
+    public static void ProcessBlast_old(Vector3 origin, int radius, int energy, Rigidbody excludeTargetRb, Rigidbody excludeInitiatorRb = null)
     {
         var rigidbodies = (Rigidbody[]) FindObjectsOfType(typeof(Rigidbody));
 
@@ -111,7 +127,8 @@ public class WeaponController : MonoBehaviour
         for (int i = 0; i < count; ++i)
         {
             var objRigidbody = rigidbodies[i];
-            if (objRigidbody == excludeTarget || objRigidbody == excludeInitiator) continue;
+            if (objRigidbody == excludeTargetRb || objRigidbody == excludeInitiatorRb || objRigidbody.isKinematic)
+                continue;
             var obj = objRigidbody.gameObject;
 
             var forceDir = (obj.transform.position - origin).normalized;
@@ -120,8 +137,9 @@ public class WeaponController : MonoBehaviour
             {
                 // if (!objRigidbody.useGravity) // Something disables it for fucking testing cubes
                 //     objRigidbody.useGravity = true;
-
                 objRigidbody.AddForce(energy * forceDir / hit.distance * hit.distance, ForceMode.Impulse);
+                Debug.DrawRay(origin, forceDir * hit.distance, Color.magenta, 60);
+                print(objRigidbody.gameObject.name);
             }
         }
     }
@@ -130,7 +148,7 @@ public class WeaponController : MonoBehaviour
     /// <param name="missileSupervisor">Used to pair missileSupervisor and its target both ways</param> 
     private GameObject SetWeaponTarget(GameObject shooter, MissileSupervisor missileSupervisor)
     {
-        var target = Instantiate(GameController.Script.missileSupervisorTargetPrefab);
+        var target = Instantiate(GameController.Instance.missileSupervisorTargetPrefab);
         target.GetComponent<MissileSupervisorTarget>().missileSupervisor = missileSupervisor;
         var shooterTransform = shooter.transform;
 

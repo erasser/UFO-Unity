@@ -11,6 +11,7 @@ using UnityEngine;
 
 public class Ufo : MonoBehaviour
 {
+    public static Ufo Instance;
     private static GameObject _forceBeam;
     private static bool _forceBeamEnabled;
     private static Rigidbody _rigidBody;
@@ -30,15 +31,17 @@ public class Ufo : MonoBehaviour
     private GameObject _laserLight;
     public GameObject rocketPrefab;
     private GameController _gameControllerScript;
-    public static Ufo Script;
     // public static GameObject ufo;
     public GameObject arrow;
+    private GameObject _alienHead;
+    private GameObject _motherShip;
+    private Vector3 _lastVelocity = Vector3.zero;
+    private float _alienHeadAcceleration;
 
     void Awake()
     {
         Application.targetFrameRate = 666;
         // ufo = Instantiate(_gameControllerScript.ufoPrefab);
-        Script = GetComponent<Ufo>();
         arrow = transform.Find("arrow").gameObject;
     }
     
@@ -54,6 +57,8 @@ public class Ufo : MonoBehaviour
         _laser.SetActive(false);
         _laserLight.SetActive(false);
         _gameControllerScript = GameObject.Find("GameController").transform.GetComponent<GameController>();
+        _alienHead = transform.Find("alienHead").gameObject;
+        _motherShip = GameObject.Find("ufoMotherShip");
 
         if (UfoCamera != null)
             _initialCameraUfoLocalPosition = UfoCamera.transform.localPosition;  // It's set in editor
@@ -124,6 +129,9 @@ public class Ufo : MonoBehaviour
         UpdateCameraUfoDistance();  // Do it although nothing is pressed, UFO can be moving due to inertia. Could be conditioned by velocity.magnitude.
         // AlignTopCamera();
         // AlignUfoCamera();
+     
+        if (_motherShip)
+            _motherShip.transform.Rotate(0, .2f, 0);
         
         // Debug.DrawRay(_jet.transform.position, _jet.transform.TransformDirection (Vector3.forward) * 20, Color.magenta);
     }
@@ -191,15 +199,24 @@ public class Ufo : MonoBehaviour
 
         // TODOO ----------- Udělat pořádně + vyřešit i nad jinými objekt než nad zemí (Raycast, SphereCast), obejít se bez odmocniny
         // TODOO ----------- Možná by stačila větší koule jako trigger, kterej by hodně zvětšil drag, bylo by jednoduché a univerzální (musely by se z toho excludnout projektily apod.)
-        if (transform.localPosition.y < 10 && _velocityChange.y < 0)
+        // if (transform.localPosition.y < 10 && _velocityChange.y < 0)
             // _velocityChange.y /= (11 - transform.position.y) * 10;
-            _velocityChange.y = - Mathf.Sqrt(transform.localPosition.y / 3.75f);
+            // _velocityChange.y = - Mathf.Sqrt(transform.localPosition.y / 3.75f);
 
         if (_velocityChange.x != 0 || _velocityChange.y != 0 || _velocityChange.z != 0)
             _rigidBody.AddRelativeForce(_velocityChange, ForceMode.VelocityChange);
             
         if (_rotationChange.x != 0 || _rotationChange.y != 0 || _rotationChange.z != 0)
             _rigidBody.AddRelativeTorque(_rotationChange, ForceMode.VelocityChange);
+
+        var velocity = _rigidBody.velocity;
+        var acceleration = (velocity - _lastVelocity) / Time.fixedDeltaTime;
+        _lastVelocity = velocity;
+
+        // _alienHead.transform.localEulerAngles = new Vector3(_alienHead.transform.localEulerAngles.x, 0, transform.InverseTransformDirection(acceleration).x);
+        // _alienHead.transform.localEulerAngles = new Vector3(transform.InverseTransformDirection(acceleration).z, 0, transform.InverseTransformDirection(acceleration).x);
+        _alienHead.transform.localEulerAngles = new Vector3(transform.InverseTransformDirection(acceleration).z, 0,  transform.InverseTransformDirection(acceleration).x);
+        // _alienHead.transform.localEulerAngles = new Vector3(transform.InverseTransformDirection(acceleration).z, 0,  GameController.SignedSqrt(transform.InverseTransformDirection(acceleration).x));
 
         // _arrowHelper.transform.rotation = Quaternion.LookRotation(_rigidBody.velocity.normalized);
 

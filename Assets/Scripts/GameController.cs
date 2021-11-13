@@ -9,6 +9,7 @@ using UnityEngine.UI;
 
 public class GameController : MonoBehaviour
 {
+    public static GameController Instance;
     [SerializeField] private FixedJoystick joystickHorizontalPlane;
     [SerializeField] private FixedJoystick joystickVerticalPlane;
     [SerializeField] private GameObject selectionSpritePrefab;
@@ -21,23 +22,21 @@ public class GameController : MonoBehaviour
     public static Vector3 SelectedObjectRelativeUpPosition;
     private RaycastHit _selectionHit;
     private static GameObject _selectedObjectCamera;
-    private static GameObject _selectedObjectCameraTexture; // UI element
-    private static Text _selectedObjectCameraText; // UI element
+    private static GameObject _rocketCamera;
     public static bool SelectedObjectMustCenterPivot; // Buildings have pivot at bottom => pivot must be centered for camera rotation.  
     private GameObject _3dGrid;
     public GameObject ufoPrefab;
     // public Ufo ufoScript;
     public GameObject selectionSpriteInstance;
-    public static Vector2 SelectedObjectCameraFOV;  // .x = horizontal FOV, .y = vertical FOV
     public GameObject missileSupervisorTargetPrefab;  // It's just invisible dummy
     public static GameObject Enemy;
     public static GameController Script;
     public static GameObject ufo;
     private static GameObject _buildingsParent;
-    
 
     void Start()
     {
+        Instance = this;
         _infoText = GameObject.Find("InfoText").GetComponent<Text>();
         _arrow = GameObject.Find("arrow");
         Enemy = GameObject.Find("jet");
@@ -46,17 +45,12 @@ public class GameController : MonoBehaviour
         _3dGrid = GameObject.Find("3d_grid_planes");
         // _ufoInstance = GameObject.Find("UFO").transform.GetComponent<Ufo>();            // Ufo.cs - allows me to call non-static method
         selectionSpriteInstance = Instantiate(selectionSpritePrefab);
-        _selectedObjectCamera = GameObject.Find("CameraSelectedObject");
-        _selectedObjectCamera.SetActive(false);
-        _selectedObjectCameraTexture = GameObject.Find("SelectedObjectCameraTexture");
-        _selectedObjectCameraText = GameObject.Find("selectedObjectCameraText").GetComponent<Text>();
-        _selectedObjectCameraTexture.SetActive(false);
-        Script = GetComponent<GameController>();
         ufo = Instantiate(ufoPrefab);
         _buildingsParent = GameObject.Find("city").transform.Find("buildings").gameObject;
-
-        var vFOV = _selectedObjectCamera.GetComponent<Camera>().fieldOfView;
-        SelectedObjectCameraFOV = new Vector2(Camera.VerticalToHorizontalFieldOfView(vFOV, 2), vFOV);
+        _rocketCamera = transform.Find("rocketCamera").gameObject;
+        _selectedObjectCamera = transform.Find("selectedObjectCamera").gameObject;
+        ToggleRenderTextureCamera(_rocketCamera, false);
+        ToggleRenderTextureCamera(_selectedObjectCamera, false);
 
         Quest.Init();
     }
@@ -81,7 +75,7 @@ public class GameController : MonoBehaviour
         if (joystickHorizontalPlane.Direction.x != 0 || joystickHorizontalPlane.Direction.y != 0 ||
             joystickVerticalPlane  .Direction.x != 0 || joystickVerticalPlane  .Direction.y != 0)
 
-            Ufo.Script.MoveUfo(joystickHorizontalPlane, joystickVerticalPlane);
+            Ufo.Instance.MoveUfo(joystickHorizontalPlane, joystickVerticalPlane);
 
         if (Input.GetKey(KeyCode.Space)         ||
             Input.GetKey(KeyCode.LeftControl)   ||
@@ -93,15 +87,15 @@ public class GameController : MonoBehaviour
             Input.GetKey(KeyCode.E)             ||
             Input.GetKey(KeyCode.LeftShift))
 
-            Ufo.Script.MoveUfo();
+            Ufo.Instance.MoveUfo();
 
         if (Input.GetKey(KeyCode.X)/* ||
             Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Stationary && !EventSystem.current.IsPointerOverGameObject(0) && !Input.GetMouseButtonDown(0)*/)
-            // WeaponController.Script.FireRocket(global::Ufo.Script.gameObject);  //ha!
-            WeaponController.Script.FireRocket(ufo);
+            // WeaponController.Instance.FireRocket(global::Ufo.Instance.gameObject);  //ha!
+            WeaponController.Instance.FireRocket(ufo);
 
         if (Input.GetKey(KeyCode.C))
-            WeaponController.Script.FireRocket(Enemy);
+            WeaponController.Instance.FireRocket(Enemy);
 
         if (Input.GetKey(KeyCode.U))
             Resources.UnloadUnusedAssets();
@@ -147,9 +141,8 @@ public class GameController : MonoBehaviour
 
         RigidbodyAssistantScript = SelectedObject.transform.GetComponent<RigidbodyAssistant>() ?? (RigidbodyAssistant) SelectedObject.AddComponent(Type.GetType("RigidbodyAssistant"));
 
-        _selectedObjectCamera.SetActive(true);
-        _selectedObjectCameraTexture.SetActive(true);
-        _selectedObjectCameraText.text = SelectedObject.name;
+        ToggleRenderTextureCamera(_selectedObjectCamera, true);
+        UI.SetSelectedObjectTextureText(SelectedObject.name);
         SelectedObjectMustCenterPivot = IsBuilding(SelectedObject);
 
         SelectedObjectRelativeUpPosition = SelectedObjectMustCenterPivot ? new Vector3(0, RigidbodyAssistantScript.verticalExtents, 0) : Vector3.zero;
@@ -163,15 +156,14 @@ public class GameController : MonoBehaviour
         try
         {
             SelectedObject = null;
-            _selectedObjectCamera.SetActive(false);
-            _selectedObjectCameraTexture.SetActive(false);
-            _selectedObjectCameraText.text = "";
+            ToggleRenderTextureCamera(_selectedObjectCamera, false);
+            UI.SetSelectedObjectTextureText();
             selectionSpriteInstance.SetActive(false);
         }
         catch (Exception e)
         {
             print("» This message should be printed when the game is stopped only. If you see this during the game, check the error here ↓↓ .");
-            // throw new Exception(e.Message);
+            throw new Exception(e.Message);
         }
     }
 
@@ -218,8 +210,7 @@ public class GameController : MonoBehaviour
     {
         if (!Quest.Current.QuestTarget)
             return;
-// print(Ufo.Script);
-//         Ufo.Script.gameObject.transform.LookAt(Quest.Current.QuestTarget.transform);
+//         Ufo.Instance.gameObject.transform.LookAt(Quest.Current.QuestTarget.transform);
     }
 
     /// <summary>
@@ -254,7 +245,9 @@ public class GameController : MonoBehaviour
         if (obj.CompareTag("rocket"))
         {
             Destroy(obj.GetComponent<MissileSupervisor>().m_guidanceSettings.m_target);
-            WeaponController.ProcessBlast(obj.transform.position, 20, 100, obj.GetComponent<Projectile>().hitObjectRigidbody, obj.GetComponent<Rigidbody>());
+            Projectile projectileScript = obj.GetComponent<Projectile>();
+            WeaponController.ProcessBlast(projectileScript.collisionCoordinates, 30, 1000, projectileScript.hitObject, obj);
+            // WeaponController.ProcessBlast_old(projectileScript.collisionCoordinates, 20, 100, projectileScript.hitObjectRigidbody, obj.GetComponent<Rigidbody>());
         }
 
         /***  If the object has a tween assigned, destroy the tween */ 
@@ -273,6 +266,12 @@ public class GameController : MonoBehaviour
         return obj.transform.parent?.gameObject == _buildingsParent;
     }
 
+    public static void ToggleRenderTextureCamera(GameObject camera, bool enable)
+    {
+        camera.SetActive(enable);
+        UI.ToggleCameraTexture(camera.name, enable);
+    }
+    
     public void ChangeTargetsDebug()
     {
         var objTransform = GameObject.Find("jet").transform;
@@ -290,7 +289,7 @@ public class GameController : MonoBehaviour
         }
     }
     
-    private static float SignedSqrt(float number)
+    public static float SignedSqrt(float number)
     {
         // square root ↓ of ↓ positive number respecting ↓ lost sign
         return Mathf.Sqrt(Math.Abs(number)) * Mathf.Sign(number);

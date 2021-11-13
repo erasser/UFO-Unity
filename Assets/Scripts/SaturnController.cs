@@ -1,7 +1,4 @@
-using System;
-using Unity.VisualScripting;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 // TODO: Zcela odstranit vzorový asteroid ze scény - dá se vytvořit prefab (drag & drop z hierarchy view do assets) a použít ten? 
 
@@ -70,7 +67,7 @@ public class SaturnController : MonoBehaviour
     {
         for (var i = 0; i < count; i++)
             Instantiate(asteroidPrefab)
-                .GetComponent<AsteroidController>()
+                .GetComponent<Asteroid>()
                 .Create(i/*, collisionSphere*/);
     }
 

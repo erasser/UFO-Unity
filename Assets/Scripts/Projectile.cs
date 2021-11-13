@@ -12,6 +12,8 @@ public class Projectile : MonoBehaviour
     public float halfHeight;
     public static int ProjectileCounter = 0;
     public Rigidbody hitObjectRigidbody;
+    public GameObject hitObject;
+    public Vector3 collisionCoordinates;
 
     void Awake()
     {
@@ -28,7 +30,12 @@ public class Projectile : MonoBehaviour
     public void OnCollisionEnter(Collision other)
     {
         if (CompareTag("rocket"))
-            hitObjectRigidbody = other.gameObject.GetComponent<Rigidbody>();  // For rocket blast to exclude hit object from blast effect
+        {
+            // hitObjectRigidbody = other.gameObject.GetComponent<Rigidbody>(); // For rocket blast to exclude hit object from blast effect
+            hitObject = other.gameObject; // For rocket blast to exclude hit object from blast effect
+            collisionCoordinates = other.GetContact(0).point;
+        }
+
         other.gameObject.GetComponent<Enemy>()?.GetDamage(50);
         _gameControllerInstance.DestroyGameObject(gameObject);
     }

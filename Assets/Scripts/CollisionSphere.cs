@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class CollisionSphere : MonoBehaviour
@@ -12,7 +9,7 @@ public class CollisionSphere : MonoBehaviour
         // if (other.CompareTag("asteroid"))
         //     return true;
 
-        AsteroidController.CollidedAsteroid();
+        Asteroid.CollidedAsteroid();
     }
     
     

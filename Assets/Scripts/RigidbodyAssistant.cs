@@ -43,7 +43,7 @@ public class RigidbodyAssistant : MonoBehaviour
         // Mathf.Pow(mesh.bounds.extents.z, 2)) * transform.lossyScale.z;
     
         // https://stackoverflow.com/questions/14614252/how-to-fit-camera-to-object
-        var tg = Mathf.Tan(GameController.SelectedObjectCameraFOV.y * .0087266f);  // .0087266 = 1/(2*57.3) (2 is from formula, 57.3 is deg->rad conversion)
+        var tg = Mathf.Tan(CameraAssistant.Instance.selectedObjectCameraFOV.y / 115); // 115 ≈ 2*57.3 (2 is from formula, 57.3 is deg->rad conversion)
     
         // var ratio = horizontalDiameter / (verticalExtents * 2);
     
