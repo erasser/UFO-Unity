@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// Opodmínkovat TrailRenderer, pokud se bude používat s něčím bez trailu!
@@ -14,6 +15,8 @@ public class Projectile : MonoBehaviour
     public Rigidbody hitObjectRigidbody;
     public GameObject hitObject;
     public Vector3 collisionCoordinates;
+    public static List<GameObject> ProjectilesRockets = new List<GameObject>();
+    public GameObject rocketCamera;
 
     void Awake()
     {
@@ -25,6 +28,15 @@ public class Projectile : MonoBehaviour
     {
         _lastShotTime = _shootTime = Time.time;
         InvokeRepeating(nameof(CheckLifespan), 0, 1);  // seconds
+        if (CompareTag("rocket"))
+        {
+            ProjectilesRockets.Add(gameObject);
+            if (ProjectilesRockets.Count == 1)  // Assign follow camera, if it's the first shot
+            {
+                GameController.RocketCamera.transform.SetParent(transform, false);
+                GameController.ToggleRenderTextureCamera(GameController.RocketCamera, true);
+            }
+        }
     }
     
     public void OnCollisionEnter(Collision other)

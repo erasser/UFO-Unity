@@ -47,6 +47,7 @@ public class Ufo : MonoBehaviour
     
     void Start()
     {
+        Instance = this;
         _rigidBody = GetComponent<Rigidbody>();
         _forceBeam = GameObject.Find("ForceBeam");
         UfoCamera = GameObject.Find("CameraUfo");

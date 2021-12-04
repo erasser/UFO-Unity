@@ -22,7 +22,7 @@ public class GameController : MonoBehaviour
     public static Vector3 SelectedObjectRelativeUpPosition;
     private RaycastHit _selectionHit;
     private static GameObject _selectedObjectCamera;
-    private static GameObject _rocketCamera;
+    public static GameObject RocketCamera;
     public static bool SelectedObjectMustCenterPivot; // Buildings have pivot at bottom => pivot must be centered for camera rotation.  
     private GameObject _3dGrid;
     public GameObject ufoPrefab;
@@ -47,9 +47,9 @@ public class GameController : MonoBehaviour
         selectionSpriteInstance = Instantiate(selectionSpritePrefab);
         ufo = Instantiate(ufoPrefab);
         _buildingsParent = GameObject.Find("city").transform.Find("buildings").gameObject;
-        _rocketCamera = transform.Find("rocketCamera").gameObject;
+        RocketCamera = transform.Find("rocketCamera").gameObject;
         _selectedObjectCamera = transform.Find("selectedObjectCamera").gameObject;
-        ToggleRenderTextureCamera(_rocketCamera, false);
+        ToggleRenderTextureCamera(RocketCamera, false);
         ToggleRenderTextureCamera(_selectedObjectCamera, false);
 
         Quest.Init();
@@ -248,6 +248,21 @@ public class GameController : MonoBehaviour
             Projectile projectileScript = obj.GetComponent<Projectile>();
             WeaponController.ProcessBlast(projectileScript.collisionCoordinates, 30, 1000, projectileScript.hitObject, obj);
             // WeaponController.ProcessBlast_old(projectileScript.collisionCoordinates, 20, 100, projectileScript.hitObjectRigidbody, obj.GetComponent<Rigidbody>());
+            Projectile.ProjectilesRockets.Remove(obj);
+
+            if (projectileScript.rocketCamera)
+            {
+                projectileScript.rocketCamera = null;
+            }
+
+            if (Projectile.ProjectilesRockets.Count > 0)
+                // RocketCamera.transform.parent = Projectile.ProjectilesRockets[0].transform;
+                RocketCamera.transform.SetParent(Projectile.ProjectilesRockets[0].transform, false);
+            else
+            {
+                RocketCamera.transform.SetParent(Instance.transform, false);
+                ToggleRenderTextureCamera(RocketCamera, false);
+            }
         }
 
         /***  If the object has a tween assigned, destroy the tween */ 
@@ -268,6 +283,8 @@ public class GameController : MonoBehaviour
 
     public static void ToggleRenderTextureCamera(GameObject camera, bool enable)
     {
+        if (camera.activeSelf == enable) return;  // nothing to change
+
         camera.SetActive(enable);
         UI.ToggleCameraTexture(camera.name, enable);
     }
@@ -283,7 +300,7 @@ public class GameController : MonoBehaviour
             {
                 // target ↓               script ↓      relevant missileSupervisor ↓    rocket ↓
                 var projectile = t.gameObject.GetComponent<MissileSupervisorTarget>().missileSupervisor.gameObject;
-                t.gameObject.transform.parent = null;
+                t.gameObject.transform.SetParent(null);
                 t.gameObject.transform.position = Vector3.zero;
             }
         }

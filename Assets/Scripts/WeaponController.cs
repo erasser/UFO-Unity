@@ -23,13 +23,12 @@ public class WeaponController : MonoBehaviour
     /// <param name="shooter">Shooter object</param>
     public void FireRocket(GameObject shooter)
     {
-        if (!Projectile.CanBeShot())
-            return;
+        if (!Projectile.CanBeShot()) return;
 
         var rocket = Instantiate(rocketPrefab);
         rocket.name = $"rocket_{Projectile.ProjectileCounter++}";
         rocket.transform.rotation = shooter.transform.rotation;
-        rocket.transform.Find("rocketCamera").gameObject.SetActive(true);
+        // rocket.transform.Find("rocketCamera").gameObject.SetActive(true);
         _projectileRotationZ = rocket.transform.eulerAngles.z;
         var missileSupervisor = rocket.GetComponent<MissileSupervisor>();
         missileSupervisor.m_guidanceSettings.m_target = SetWeaponTarget(shooter, missileSupervisor); // Must be set before end of the tween
