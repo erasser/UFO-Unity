@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using DigitalRuby.Tween;
 using SparseDesign.ControlledFlight;
 using UnityEngine;
@@ -213,9 +214,10 @@ public class GameController : MonoBehaviour
     }
 
     /// <summary>
-    /// Manages destroying objects at one place, so OnDestroy() on every fucking object is not necessary.
-    /// <param name="isPooled">Pooled objects are not destroyed, they are set inactive.</param>
+    ///     Manages destroying objects at one place, so OnDestroy() on every fucking object is not necessary.
     /// </summary>
+    /// <param name="obj">GameObject to destroy.</param>
+    /// <param name="isPooled">Pooled objects are not destroyed, they are set inactive.</param>
     public void DestroyGameObject(GameObject obj, bool isPooled = false)
     {
         /***  If the object is selected, unselect it (does not solve selected children, but it's not needed now). */

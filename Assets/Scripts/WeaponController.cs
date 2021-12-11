@@ -11,6 +11,7 @@ public class WeaponController : MonoBehaviour
     public static WeaponController Script;
     private float _projectileRotationZ; // Used just to pass variable to passed tween function
     private static Collider[] _blastSphereColliders = new Collider[100];
+    public static int LastRocketShooterId;
 
     void Start()
     {
@@ -23,9 +24,11 @@ public class WeaponController : MonoBehaviour
     /// <param name="shooter">Shooter object</param>
     public void FireRocket(GameObject shooter)
     {
-        if (!Projectile.CanBeShot()) return;
+        if (!Projectile.CanBeShot(shooter.GetInstanceID())) return;
 
-        var rocket = Pool.GetNewInstance("rocket");
+        LastRocketShooterId = shooter.GetInstanceID();
+        
+        var rocket = Pool.GetNewInstance("rocket", shooter.GetInstanceID());
 
         rocket.transform.rotation = shooter.transform.rotation;
         _projectileRotationZ = rocket.transform.eulerAngles.z;

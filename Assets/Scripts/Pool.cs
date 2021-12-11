@@ -12,7 +12,7 @@ using UnityEngine;
 
 public class Pool : MonoBehaviour
 {
-    private static List<GameObject> ProjectilesRocketsPool = new List<GameObject>();
+    public static List<GameObject> ProjectilesRocketsPool = new List<GameObject>();
     
     // for debug:
     // public int inPool = 0;
@@ -26,7 +26,12 @@ public class Pool : MonoBehaviour
 
     // TODO: Vyřešit jinak než větvením uvnitř fce?
     /** Pick existing instance from pool or create new instance, if no object is available */
-    public static GameObject GetNewInstance(string type)
+    /// <summary>
+    ///     Returns object from the pool if available, else returns new object instance. Returns active object.
+    /// </summary>
+    /// <param name="type">Type of projectile ("rocket")</param>
+    /// <param name="shooterId">Unique instance ID</param>
+    public static GameObject GetNewInstance(string type, int shooterId)
     {
         GameObject rocket = null;
 
@@ -36,13 +41,12 @@ public class Pool : MonoBehaviour
 
             if (rocket)
             {
-                rocket.GetComponent<Projectile>().Reset();
+                rocket.GetComponent<Projectile>().ResetPooledObject(shooterId);  // Also sets object active
             }
             else
             {
                 rocket = Instantiate(WeaponController.Instance.rocketPrefab);
                 ProjectilesRocketsPool.Add(rocket);
-                rocket.name = $"{type}_{ProjectilesRocketsPool.Count - 1}";
             }
         }
 

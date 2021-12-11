@@ -7,9 +7,11 @@ using UnityEngine;
 public class Projectile : MonoBehaviour
 {
     private GameController _gameControllerInstance;
+    public int shooterId;                       // Used for shooter last shot time check
     private static float _lifespan = 30;        // lifespan (s)
     private static float _rocketsDelay = .5f;   // Delay until next projectile can be fired (s)
-    private static float _lastShotTime;         // Time of last shot projectile
+    // TODO: ► Když se destroyne enemy, odstranit jeho záznam ze slovníku
+    public static Dictionary<int, float> LastRocketShotTime = new Dictionary<int, float>();  // _lastShotTime[object instance ID] = time  // or IDictionary?
     private float _shootTime;                   // Time, when this projectile was shot
     public float halfHeight;
     public Rigidbody hitObjectRigidbody;
@@ -25,23 +27,33 @@ public class Projectile : MonoBehaviour
         halfHeight = GetComponent<MeshFilter>().sharedMesh.bounds.extents.y * transform.lossyScale.y;
     }
     
+    // If something is added here, check if it should be added to ResetPooledObject() method.
     void Start()
     {
         if (CompareTag("rocket"))
         {
-            _lastShotTime = _shootTime = Time.time;
-            InvokeRepeating(nameof(CheckLifespan), 0, 1);  // seconds
+            // _shootTime = Time.time;
+            shooterId = WeaponController.LastRocketShooterId;
+            // LastRocketShotTime.Add(shooterId, Time.time);
+            LastRocketShotTime[shooterId] = _shootTime = Time.time;
+            name = $"rocket_{Pool.ProjectilesRocketsPool.Count - 1}";
             SetRocketCamera();
+            // InvokeRepeating(nameof(CheckLifespan), 0, 1);  // seconds
         }
     }
 
-    public void Reset()
+    /// <summary>
+    ///     For objects from the pool, should reflect Start() method.
+    /// </summary>
+    /// <param name="newShooterId">Unique instance ID</param>
+    public void ResetPooledObject(int newShooterId)
     {
         // TODO: Cancel invoke (see Ui.cs)
         // CancelInvoke(nameof(CheckLifespan));
         if (CompareTag("rocket"))
         {
-            _lastShotTime = _shootTime = Time.time;
+            shooterId = newShooterId;
+            LastRocketShotTime[newShooterId] = _shootTime = Time.time;
             transform.position.Set(0, 0, 0);
             transform.eulerAngles.Set(0, 0, 0);
             GetComponent<TrailRenderer>().enabled = false;
@@ -107,8 +119,20 @@ public class Projectile : MonoBehaviour
             _gameControllerInstance.DestroyGameObject(gameObject, true);
     }
 
-    public static bool CanBeShot()
+    public static bool CanBeShot(int shooterId)
     {
-        return Time.time > _lastShotTime + _rocketsDelay;
+        if (!LastRocketShotTime.ContainsKey(shooterId))  // First shot of this shooter
+        {
+             print("first shot of this shooter");
+             // lastShootTime = Time.time;
+             // print("adding: " + " • " + shooterId + " • " + lastShootTime);
+             // LastRocketShotTime.Add(shooterId, lastShootTime);
+
+             return true;
+        }
+
+        var lastShootTime = LastRocketShotTime[shooterId];
+
+        return Time.time > lastShootTime + _rocketsDelay;
     }
 }
