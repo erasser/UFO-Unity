@@ -25,22 +25,30 @@ public class WeaponController : MonoBehaviour
     {
         if (!Projectile.CanBeShot()) return;
 
-        var rocket = Instantiate(rocketPrefab);
-        rocket.name = $"rocket_{Projectile.ProjectileCounter++}";
+        var rocket = Pool.GetNewInstance("rocket");
+
         rocket.transform.rotation = shooter.transform.rotation;
-        // rocket.transform.Find("rocketCamera").gameObject.SetActive(true);
         _projectileRotationZ = rocket.transform.eulerAngles.z;
+
         var missileSupervisor = rocket.GetComponent<MissileSupervisor>();
+        
+        // if (!rocket.activeSelf)
+        // {
+        //     rocket.SetActive(true);  // Should be called after resetting pooled object
+        // }
+
         missileSupervisor.m_guidanceSettings.m_target = SetWeaponTarget(shooter, missileSupervisor); // Must be set before end of the tween
+
         // var rocketScript = rocket.GetComponent<Projectile>();
 
-        // TODO: Add some rocket camera management (try to use just 1 cam)
+        // TODO: Projectile object pooling
         // TODO: There remains some shit badly affecting performance when firing more missiles, it remains also when re-played
         //       (It's cleared on Unity restart). TrailRenderer obviously is not the cause.
         // TODO: Fix rocket deploy when UFO is moving
-        // TODO: Make rocket camera texture not visible by default
         // TODO: Consider making rockets destroyable by rockets?
         // TODO: Ensure rocket will not hit the shooter, if the shooter is in the rocket's way (e.g. above the shooter) - It will. Maybe first push a bit the rocket forward and set a delay to launch method.
+        // TODO: (done) Make rocket camera texture not visible by default
+        // TODO: (done) Add some rocket camera management (try to use just 1 cam)
         // TODO: (done) Test with rotated shooter
         // TODO: (done) Disable collider instead of using trigger? - Test with enemy
         // TODO: (done) Implement rocket blast (blast objects in proximity)
@@ -67,7 +75,7 @@ public class WeaponController : MonoBehaviour
         var endPos = shooterPosition + (rocketPosition - shooterPosition).normalized * .8f; // Is not affected by rocketScript.halfHeight
 
         var startPos = rocketPosition;
-        rocket.Tween($"tween_{rocket.name}", startPos, endPos, 1.2f, TweenScaleFunctions.QuadraticEaseOut, UpdatePos, MoveCompleted);
+        rocket.Tween($"tween_{rocket.name}_{Time.time}", startPos, endPos, 1.2f, TweenScaleFunctions.QuadraticEaseOut, UpdatePos, MoveCompleted);
 
         void UpdatePos(ITween<Vector3> t)
         {
@@ -90,7 +98,6 @@ public class WeaponController : MonoBehaviour
             // if (rocket.GetComponent<BoxCollider>().enabled == false)  // For sure
             rocket.GetComponent<BoxCollider>().enabled = true;
             rocket.GetComponent<TrailRenderer>().enabled = true;
-
             missileSupervisor.m_launchCustomDir = rocket.transform.forward;
             missileSupervisor.StartLaunchSequence();
         }

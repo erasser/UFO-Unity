@@ -64,6 +64,7 @@ object jitters when moving                                      Transform it in 
 • simulator (tutorial)
 • Area 51 (escape? attack? stealth?)
 • underwater
+• hell on Venus!
 
  optimization
 ══════════════
@@ -72,6 +73,7 @@ object jitters when moving                                      Transform it in 
 • Use .localPosition instead of .position if possible 
 • object pooling (use for rockets etc.)
 • What's not visible to camera (renderer.isVisible), need not to be updated (I presume, with an excteption to physical objects)
+• Some objects (e.g. asteroids) don't have to collide when far from player
 • When Vector3.normalized is calculated? When it's called or is it precalculated? I contains square root, I guess.
 
  physics

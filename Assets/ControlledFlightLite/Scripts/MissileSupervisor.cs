@@ -55,7 +55,7 @@ namespace SparseDesign
 
             [SerializeField] public bool m_debug = false;
 
-            [SerializeField] public bool m_autoLaunch = true;
+            [SerializeField] public bool m_autoLaunch = false;
             [SerializeField] public float m_trackingDelay = 0f;
             [SerializeField] public bool m_stopAtIntercept = false;
             [SerializeField] public bool m_destroyAtHit = false;
@@ -69,11 +69,11 @@ namespace SparseDesign
             public int m_currentMotorStage { private set; get; } = 0;
             [SerializeField] public List<ThrustControl.MotorSettings> m_motorStages = new List<ThrustControl.MotorSettings>();
 
-            [SerializeField] public LaunchType m_launchType = default;
+            [SerializeField] public LaunchType m_launchType = LaunchType.CUSTOMDIRECTION;
             [SerializeField] public Vector3 m_launchCustomDir = default;
             [SerializeField] public GameObject m_launchObject = default;
 
-            [SerializeField] public float m_launchSpeed = 0f;
+            [SerializeField] public float m_launchSpeed = .5f;
 
             private MissileGuidance m_guidance = default;
             private ThrustControl m_motor = default;

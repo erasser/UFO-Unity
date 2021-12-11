@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SparseDesign.ControlledFlight;
 using UnityEngine;
 
 /// Opodmínkovat TrailRenderer, pokud se bude používat s něčím bez trailu!
@@ -11,12 +12,12 @@ public class Projectile : MonoBehaviour
     private static float _lastShotTime;         // Time of last shot projectile
     private float _shootTime;                   // Time, when this projectile was shot
     public float halfHeight;
-    public static int ProjectileCounter = 0;
     public Rigidbody hitObjectRigidbody;
     public GameObject hitObject;
     public Vector3 collisionCoordinates;
-    public static List<GameObject> ProjectilesRockets = new List<GameObject>();
+    public static List<GameObject> ProjectilesRockets = new List<GameObject>();  // Used for easily get count, first, next, last...
     public GameObject rocketCamera;
+    // public static int ProjectileCounter = 0;  // Now the Pool manages this
 
     void Awake()
     {
@@ -26,16 +27,53 @@ public class Projectile : MonoBehaviour
     
     void Start()
     {
-        _lastShotTime = _shootTime = Time.time;
-        InvokeRepeating(nameof(CheckLifespan), 0, 1);  // seconds
         if (CompareTag("rocket"))
         {
-            ProjectilesRockets.Add(gameObject);
-            if (ProjectilesRockets.Count == 1)  // Assign follow camera, if it's the first shot
-            {
-                GameController.RocketCamera.transform.SetParent(transform, false);
-                GameController.ToggleRenderTextureCamera(GameController.RocketCamera, true);
-            }
+            _lastShotTime = _shootTime = Time.time;
+            InvokeRepeating(nameof(CheckLifespan), 0, 1);  // seconds
+            SetRocketCamera();
+        }
+    }
+
+    public void Reset()
+    {
+        // TODO: Cancel invoke (see Ui.cs)
+        // CancelInvoke(nameof(CheckLifespan));
+        if (CompareTag("rocket"))
+        {
+            _lastShotTime = _shootTime = Time.time;
+            transform.position.Set(0, 0, 0);
+            transform.eulerAngles.Set(0, 0, 0);
+            GetComponent<TrailRenderer>().enabled = false;
+            GetComponent<BoxCollider>().enabled = false;
+            GetComponent<Rigidbody>().velocity = Vector3.zero;
+            GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
+            DestroyImmediate(GetComponent<MissileSupervisor>());  // Must be destroyed immediately, else MissileSupervisor reset doesn't work
+            var go = gameObject;
+            go.AddComponent<MissileSupervisor>();
+            SetRocketCamera();
+            go.SetActive(true);
+            // var newMissile = rocket.GetComponent<MissileSupervisor>();
+            // var missilePrefab = WeaponController.Instance.rocketPrefab.GetComponent<MissileSupervisor>();
+            // newMissile.m_guidanceSettings.m_target = WeaponController.Instance.SetWeaponTarget(Ufo.Instance.gameObject, newMissile); // Must be set before end of the tween
+            // newMissile.m_guidanceSettings.m_N = missilePrefab.m_guidanceSettings.m_N;
+            // newMissile.m_guidanceSettings.m_limitAcceleration = missilePrefab.m_guidanceSettings.m_limitAcceleration;
+            // newMissile.m_guidanceSettings.m_maxAcceleration = missilePrefab.m_guidanceSettings.m_maxAcceleration;
+            // newMissile.m_launchType = missilePrefab.m_launchType;
+            // newMissile.m_autoLaunch = missilePrefab.m_autoLaunch;
+            // newMissile.m_launchSpeed = missilePrefab.m_launchSpeed;
+            // newMissile.m_motorStages[0].m_limitMotorAcceleration = missilePrefab.m_motorStages[0].m_limitMotorAcceleration;
+            // newMissile.m_motorStages[0].m_speed = missilePrefab.m_motorStages[0].m_speed;
+        }
+    }
+
+    private void SetRocketCamera()
+    {
+        ProjectilesRockets.Add(gameObject);
+        if (ProjectilesRockets.Count == 1) // Assign follow camera, if it's the first shot
+        {
+            GameController.RocketCamera.transform.SetParent(transform, false);
+            GameController.ToggleRenderTextureCamera(GameController.RocketCamera, true);
         }
     }
     
@@ -49,7 +87,7 @@ public class Projectile : MonoBehaviour
         }
 
         other.gameObject.GetComponent<Enemy>()?.GetDamage(50);
-        _gameControllerInstance.DestroyGameObject(gameObject);
+        _gameControllerInstance.DestroyGameObject(gameObject, true);
     }
 
     // Ensures the projectile doesn't collide with the shooter itself
@@ -61,17 +99,16 @@ public class Projectile : MonoBehaviour
 
     private void CheckLifespan()  // There is also 'limit flight time' in missileSupervisor - just stops tracking, flight continues
     {
+        print("checking lifespan");
         if (Time.time - _shootTime > 10)
             gameObject.GetComponent<TrailRenderer>().enabled = false;
         
         if (Time.time - _shootTime > _lifespan)
-            _gameControllerInstance.DestroyGameObject(gameObject);
+            _gameControllerInstance.DestroyGameObject(gameObject, true);
     }
 
     public static bool CanBeShot()
     {
         return Time.time > _lastShotTime + _rocketsDelay;
     }
-    
-    
 }

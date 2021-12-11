@@ -208,15 +208,15 @@ public class GameController : MonoBehaviour
 
     private void UpdateArrow()
     {
-        if (!Quest.Current.QuestTarget)
-            return;
-//         Ufo.Instance.gameObject.transform.LookAt(Quest.Current.QuestTarget.transform);
+        // if (!Quest.Current.QuestTarget)
+        //     Ufo.Instance.gameObject.transform.LookAt(Quest.Current.QuestTarget.transform);
     }
 
     /// <summary>
     /// Manages destroying objects at one place, so OnDestroy() on every fucking object is not necessary.
+    /// <param name="isPooled">Pooled objects are not destroyed, they are set inactive.</param>
     /// </summary>
-    public void DestroyGameObject(GameObject obj)
+    public void DestroyGameObject(GameObject obj, bool isPooled = false)
     {
         /***  If the object is selected, unselect it (does not solve selected children, but it's not needed now). */
         if (obj == SelectedObject)
@@ -256,7 +256,6 @@ public class GameController : MonoBehaviour
             }
 
             if (Projectile.ProjectilesRockets.Count > 0)
-                // RocketCamera.transform.parent = Projectile.ProjectilesRockets[0].transform;
                 RocketCamera.transform.SetParent(Projectile.ProjectilesRockets[0].transform, false);
             else
             {
@@ -266,14 +265,18 @@ public class GameController : MonoBehaviour
         }
 
         /***  If the object has a tween assigned, destroy the tween */ 
-        for (int i = TweenFactory.Tweens.Count - 1; i >= 0; --i)
+        // for (int i = TweenFactory.Tweens.Count - 1; i >= 0; --i)
+        foreach (var tween in TweenFactory.Tweens)
         {
-            var tween = TweenFactory.Tweens[i];
+            // var tween = TweenFactory.Tweens[i];
             if (obj == tween.GetGameObject())
               TweenFactory.RemoveTween(tween, TweenStopBehavior.DoNotModify);
         }
 
-        Destroy(obj);
+        if (isPooled)
+            obj.SetActive(false);
+        else
+            Destroy(obj);
     }
 
     public static bool IsBuilding(GameObject obj)

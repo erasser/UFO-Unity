@@ -66,7 +66,7 @@ namespace SparseDesign
                 public TargetType m_targetType = TargetType.TARGET;
 
                 public bool m_limitAcceleration = true;
-                public float m_maxAcceleration = 100;
+                public float m_maxAcceleration = 80;
 
                 //Settings for target guidance
                 public GuidanceType m_guidanceType = default;
