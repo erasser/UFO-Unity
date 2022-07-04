@@ -262,7 +262,7 @@ namespace SparseDesign
                 EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("m_debug"), new GUIContent("Debug Info", "Prints and draw debug info. [m_debug]"));
 
-                if (EditorGUI.EndChangeCheck())
+                /*if (EditorGUI.EndChangeCheck())
                 {
                     serializedObject.ApplyModifiedProperties();
                     var activeScene = EditorSceneManager.GetActiveScene();
@@ -273,7 +273,7 @@ namespace SparseDesign
                     {
                         EditorSceneManager.MarkSceneDirty(prefabStage.scene);
                     }
-                }
+                }*/
             }
             // Show child property of parent serializedProperty
             void ShowRelativeProperty(SerializedProperty serializedProperty, string propertyName, bool customText, string txt, bool toolTip, string toolTipText)

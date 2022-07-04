@@ -7,8 +7,6 @@ namespace SparseDesign
     {
         abstract public class MissileGuidance
         {
-            private Quaternion _initialMissileRotation;
-            
             /// <summary>
             /// Get a new instance of a sub-class of Thrustcontrol with the appropriate settings.
             /// </summary>
@@ -55,18 +53,18 @@ namespace SparseDesign
                 TARGET = 0,
                 PATH = 1
             }
-            
+
+            [System.Serializable]
             /// <summary>
             /// All settings for MissileGuidance class
             /// </summary>
-            [System.Serializable]
             public class GuidanceSettings
             {
                 //General settings, always relevant
                 public TargetType m_targetType = TargetType.TARGET;
 
                 public bool m_limitAcceleration = true;
-                public float m_maxAcceleration = 80;
+                public float m_maxAcceleration = 100;
 
                 //Settings for target guidance
                 public GuidanceType m_guidanceType = default;
@@ -179,32 +177,9 @@ namespace SparseDesign
 
             /// <summary>
             /// Align object z-axis with velocity.
-            /// Also handle Bank-To-Turn. (Míša's implementation)
+            /// Also handle Bank-To-Turn.
             /// </summary>
             public void AttitudeAdjustment()
-            {
-                float dt = (m_firstCommand) ? 0f : Time.time - m_lastTime;
-
-                var lastMissileRotationY = m_missileRb.transform.eulerAngles.y;
-
-                if (m_missileRb.velocity.sqrMagnitude < float.Epsilon) return;
-                Vector3 up;
-                up = Vector3.up;
-
-                var oldRot = m_missile.transform.rotation;
-
-                Quaternion newRot;
-                if (m_firstCommand)  // TODO: Do I need this condition? (If not, fuck it off the loop)
-                    newRot = oldRot;
-                else
-                    newRot = Quaternion.Lerp(oldRot, Quaternion.LookRotation(m_missileRb.velocity, up), dt / 0.1f);//Limit rotation to avoid odd behaviour around vertical (gimbal lock).
-
-                // Sets missile Z rotation proportional to change of its Y rotation
-                newRot = Quaternion.Euler(new Vector3(newRot.eulerAngles.x, newRot.eulerAngles.y, 20 * (lastMissileRotationY - newRot.eulerAngles.y)));
-                m_missileRb.MoveRotation(newRot);
-            }
-            
-            /*  BACKUP  public void AttitudeAdjustment()
             {
                 float dt = (m_firstCommand) ? 0f : Time.time - m_lastTime;
 
@@ -221,11 +196,11 @@ namespace SparseDesign
                     newRot = Quaternion.Lerp(oldRot, Quaternion.LookRotation(m_missileRb.velocity, up), dt / 0.1f);//Limit rotation to avoid odd behaviour around vertical (gimbal lock).
 
                 m_missileRb.MoveRotation(newRot);
-            }*/
+            }
 
             /// <summary>
             /// This is the main method to be periodically called to guide the missile.
-            /// CommandMissile should be called from FixedUpdate to guide the object. It is not necessary to be called from FixedUpdate, but care must be taken if not.
+            /// CommandMissile should be called from FixedUpdate to guide the object. It is not necessary to be called from FixedUpdate, butn care must be taken if not.
             /// </summary>
             /// <param name="doControl">If true, the missile is controlled, otherwise the guidance system is off</param>
             public void CommandMissile(bool doControl)//May be set to virtual if some algorithm needs it 

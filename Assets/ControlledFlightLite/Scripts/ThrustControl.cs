@@ -40,9 +40,9 @@ namespace SparseDesign
                 public bool m_limitFlightTime = false;
                 public float m_flightTime = 10;
 
-                public float m_speed = 100;
-                public bool m_limitMotorAcceleration = true;
-                public float m_maxAcceleration = 6;
+                public float m_speed = 1;
+                public bool m_limitMotorAcceleration = false;
+                public float m_maxAcceleration = 10;
             }
 
             static public float m_rho = 1.2250f;//https://en.wikipedia.org/wiki/Density_of_air
